@@ -34,7 +34,6 @@ export function StudentSignUpForm({
               Already have an account? <a href="#">Log in</a>
             </FieldDescription>
           </div>
-          </div>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
