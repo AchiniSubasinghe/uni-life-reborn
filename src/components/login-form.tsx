@@ -10,11 +10,14 @@ import {
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {auth} from "@/config/firebase.config"
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <form>
@@ -77,11 +80,10 @@ export function LoginForm({
         </FieldGroup>
       </form>
       <FieldDescription className="px-6 text-center">
-       <p >
+        <p >
           Create your account to access verified hostels and essential services near your university.
         </p>
       </FieldDescription>
-      
     </div>
   )
 }
