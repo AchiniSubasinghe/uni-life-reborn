@@ -1,52 +1,243 @@
-import { GalleryVerticalEnd } from "lucide-react"
+"use client"
+
+import { useState } from "react"
+import { GalleryVerticalEnd, Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
+import { createUserWithEmailAndPassword } from "firebase/auth"
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import { auth, db } from "@/config/firebase.config"
+
+const INITIAL_FORM = {
+  fullName: "",
+  email: "",
+  phone: "",
+  password: "",
+  confirmPassword: "",
+}
+
+type FormErrors = Partial<Record<keyof typeof INITIAL_FORM | "terms" | "submit", string>>
 
 export function StudentSignUpForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+  const [formData, setFormData] = useState(INITIAL_FORM)
+  const [errors, setErrors] = useState<FormErrors>({})
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  const handleChange = (field: keyof typeof INITIAL_FORM, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
+    setErrors((prev) => ({ ...prev, [field]: undefined }))
+  }
+
+  const validate = (): FormErrors => {
+    const e: FormErrors = {}
+    if (!formData.fullName.trim()) e.fullName = "Full name is required."
+    if (!formData.email.trim()) e.email = "Email is required."
+    if (!formData.phone.trim()) e.phone = "Phone number is required."
+    if (formData.password.length < 8) e.password = "Password must be at least 8 characters."
+    if (formData.password !== formData.confirmPassword) e.confirmPassword = "Passwords do not match."
+    if (!agreedToTerms) e.terms = "You must agree to the terms and conditions."
+    return e
+  }
+
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    const validationErrors = validate()
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      return
+    }
+
+    try {
+      setLoading(true)
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        formData.email,
+        formData.password
+      )
+
+      await setDoc(doc(db, "students", userCredential.user.uid), {
+        fullName: formData.fullName.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        role: "student",
+        createdAt: serverTimestamp(),
+      })
+
+      setFormData(INITIAL_FORM)
+      setAgreedToTerms(false)
+      alert("Student account created successfully!")
+    } catch (error: any) {
+      console.error(error)
+      setErrors({ submit: error.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form>
+    <div className={cn("flex flex-col gap-6 ", className)} {...props}>
+      <form onSubmit={handleSignUp} noValidate>
         <FieldGroup>
-          <div className="flex flex-col items-center gap-2 text-center">
-            <a
-              href="#"
-              className="flex flex-col items-center gap-2 font-medium"
-            >
+          {/* Header */}
+          <div className="flex flex-col items-center gap-1 text-center border-black-400 ">
+            <a href="#" className="flex flex-col items-center gap-2 font-medium">
               <div className="flex size-8 items-center justify-center rounded-md">
                 <GalleryVerticalEnd className="size-6" />
               </div>
               <span className="sr-only">UniLife.</span>
             </a>
-            <h1 className="text-xl font-bold">Welcome to UniLife.</h1>
+            <h1 className="text-xl font-bold dark:text-white">Create a Student Account</h1>
             <FieldDescription>
-              Already have an account? <a href="#">Log in</a>
+              Already have an account? <Link href="/login">Log in</Link>
             </FieldDescription>
           </div>
+
+          <Field>
+            <FieldLabel htmlFor="full-name">Full Name</FieldLabel>
+            <Input
+              id="full-name"
+              type="text"
+              placeholder="John Doe"
+              value={formData.fullName}
+              onChange={(e) => handleChange("fullName", e.target.value)}
+              aria-invalid={!!errors.fullName}
+              required
+            />
+            {errors.fullName && <FieldError>{errors.fullName}</FieldError>}
+          </Field>
+
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
             <Input
               id="email"
               type="email"
               placeholder="m@example.com"
+              value={formData.email}
+              onChange={(e) => handleChange("email", e.target.value)}
+              aria-invalid={!!errors.email}
               required
             />
+            {errors.email && <FieldError>{errors.email}</FieldError>}
           </Field>
+
           <Field>
-            <Button type="submit">SignUp</Button>
+            <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
+            <Input
+              id="phone"
+              type="tel"
+              placeholder="+94 77 123 4567"
+              value={formData.phone}
+              onChange={(e) => handleChange("phone", e.target.value)}
+              aria-invalid={!!errors.phone}
+              required
+            />
+            {errors.phone && <FieldError>{errors.phone}</FieldError>}
           </Field>
+
+          <Field>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={formData.password}
+                onChange={(e) => handleChange("password", e.target.value)}
+                aria-invalid={!!errors.password}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            {errors.password && <FieldError>{errors.password}</FieldError>}
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="confirm-password">Confirm Password</FieldLabel>
+            <div className="relative">
+              <Input
+                id="confirm-password"
+                type={showConfirmPassword ? "text" : "password"}
+                placeholder="••••••••"
+                value={formData.confirmPassword}
+                onChange={(e) => handleChange("confirmPassword", e.target.value)}
+                aria-invalid={!!errors.confirmPassword}
+                required
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((v) => !v)}
+                className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+                aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              >
+                {showConfirmPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              </button>
+            </div>
+            {errors.confirmPassword && <FieldError>{errors.confirmPassword}</FieldError>}
+          </Field>
+
+          <Field>
+            <label className="flex items-start gap-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreedToTerms}
+                onChange={(e) => {
+                  setAgreedToTerms(e.target.checked)
+                  setErrors((prev) => ({ ...prev, terms: undefined }))
+                }}
+                className="mt-0.5 accent-primary"
+              />
+              <span className="text-muted-foreground dark:text-muted-foreground">
+                I agree to the{" "}
+                <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
+                  Privacy Policy
+                </Link>
+              </span>
+            </label>
+            {errors.terms && <FieldError>{errors.terms}</FieldError>}
+          </Field>
+
+          {errors.submit && (
+            <FieldError className="text-center">{errors.submit}</FieldError>
+          )}
+
+          <Field>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Creating account…" : "Sign Up"}
+            </Button>
+          </Field>
+
           <FieldSeparator>Or</FieldSeparator>
+
           <Field className="grid gap-4 sm:grid-cols-2">
             <Button variant="outline" type="button">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -70,8 +261,7 @@ export function StudentSignUpForm({
         </FieldGroup>
       </form>
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        Register as a student to access verified hostels and essential services near your university.
       </FieldDescription>
     </div>
   )
