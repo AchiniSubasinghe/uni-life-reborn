@@ -15,6 +15,7 @@ import { auth } from "@/config/firebase.config"
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { GoogleAuthProvider, signInWithPopup, OAuthProvider } from "firebase/auth";
+import { useRouter } from "next/navigation";
 
 export function LoginForm({
   className,
@@ -37,6 +38,7 @@ export function LoginForm({
 
       console.log("Logged in user:", userCredential.user);
       alert("Login successful!");
+      router.push("/student/dashboard");
 
     } catch (error: any) {
       console.error(error.message);
@@ -50,6 +52,7 @@ export function LoginForm({
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
+      router.push("/student/dashboard");
     } catch (error: any) {
       if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
         console.error(error.message);
@@ -81,6 +84,7 @@ export function LoginForm({
       setPopupLoading(false);
     }
   };
+  const router = useRouter();
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
