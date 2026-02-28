@@ -105,7 +105,7 @@ export function StudentSignUpForm({
             </a>
             <h1 className="text-xl font-bold dark:text-white">Create a Student Account</h1>
             <FieldDescription>
-              Already have an account? <Link href="/login">Log in</Link>
+              Already have an account? <Link href="/login">Sign In</Link>
             </FieldDescription>
           </div>
 
