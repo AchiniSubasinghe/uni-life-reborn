@@ -9,7 +9,7 @@ export default function SignUpPage() {
 
       <div className="absolute inset-0 -z-10">
         <Image
-          src="/images/test.png"
+          src="/images/book.jpeg"
           alt="Background"
           fill
           priority
