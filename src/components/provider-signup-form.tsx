@@ -96,7 +96,7 @@ export function ProviderSignUpForm({
 
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-4 sm:gap-6 w-full max-w-md mx-auto px-4 sm:px-6", className)} {...props}>
       <form onSubmit={handleSignUp} noValidate>
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
@@ -109,13 +109,13 @@ export function ProviderSignUpForm({
               </div>
               <span className="sr-only">UniLife.</span>
             </a>
-            <h1 className="text-xl font-bold">Create a Provider Account</h1>
+            <h1 className="text-lg sm:text-xl font-bold">Create a Provider Account</h1>
             <FieldDescription>
-              Already have an account? <Link href="/login">Log in</Link>
+              Already have an account? <Link href="/login">Sign In</Link>
             </FieldDescription>
           </div>
-          <div className="flex gap-4">
-            <Field>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <Field className="flex-1">
               <FieldLabel htmlFor="first-name">First Name</FieldLabel>
               <Input
                 id="first-name"
@@ -128,7 +128,7 @@ export function ProviderSignUpForm({
               />
             </Field>
 
-            <Field>
+            <Field className="flex-1">
               <FieldLabel htmlFor="last-name">Last Name</FieldLabel>
               <Input
                 id="last-name"
@@ -270,7 +270,7 @@ export function ProviderSignUpForm({
           </Field>
 
           <FieldSeparator>Or</FieldSeparator>
-          <Field className="grid gap-4 sm:grid-cols-2">
+          <Field className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
             <Button variant="outline" type="button">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
                 <path
