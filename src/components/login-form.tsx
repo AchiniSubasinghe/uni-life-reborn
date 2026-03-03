@@ -1,5 +1,4 @@
 "use client"
-import { GalleryVerticalEnd } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -176,22 +175,27 @@ export function LoginForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <form onSubmit={handleLogin}>
+      <div
+        className="relative overflow-hidden rounded-2xl p-7 flex flex-col gap-6"
+        style={{
+          background: 'rgba(255,255,255,0.045)',
+          backdropFilter: 'blur(32px)',
+          border: '1px solid rgba(255,255,255,0.09)',
+        }}
+      >
+        {/* glass sheen */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none rounded-2xl" />
+      <form onSubmit={handleLogin} className="relative z-10">
         <FieldGroup>
           <div className="flex flex-col items-center gap-2 text-center">
-            <a
-              href="#"
-              className="flex flex-col items-center gap-2 font-medium"
-            >
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <GalleryVerticalEnd className="size-6" />
-              </div>
-              <span className="sr-only">UniLife.</span>
-            </a>
-            <h1 className="text-xl font-bold">Welcome to UniLife.</h1>
-            <FieldDescription>
-              Don't have an account? <Link href="/signup">Sign up</Link>
-            </FieldDescription>
+            <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 border border-white/15 mb-1">
+              <span className="text-white font-bold text-base">U</span>
+            </div>
+            <h1 className="text-xl font-bold text-white">Welcome to UniLife</h1>
+            <p className="text-sm text-white/45">
+              Don't have an account?{" "}
+              <Link href="/signup" className="text-indigo-300 hover:text-indigo-200 transition-colors">Sign up</Link>
+            </p>
           </div>
           <Field>
             <FieldLabel htmlFor="email">Email</FieldLabel>
@@ -244,9 +248,10 @@ export function LoginForm({
           </Field>
         </FieldGroup>
       </form >
-      <FieldDescription className="px-6 text-center">
+      <p className="px-4 text-center text-xs text-white/35 relative z-10">
         Create your account to access verified hostels and essential services near your university.
-      </FieldDescription>
+      </p>
+      </div>
     </div>
   )
 }
