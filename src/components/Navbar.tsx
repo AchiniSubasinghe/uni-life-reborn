@@ -2,87 +2,176 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
+import { X, Menu } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
+
+const navItems = [
+  { href: '#hero', label: 'Home', section: 'hero' },
+  { href: '#services', label: 'Services', section: 'services' },
+  { href: '#about', label: 'About', section: 'about' },
+  { href: '#people', label: 'People', section: 'people' },
+  { href: '#contact', label: 'Contact', section: 'contact' },
+]
 
 const Navbar = () => {
-  const [activeSection, setActiveSection] = useState('home');
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [activeSection, setActiveSection] = useState('hero')
+  const [scrolled, setScrolled] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     const handleScroll = () => {
-      const sections = ['home', 'sponsor', 'about', 'memories', 'flow', 'people', 'chat', 'register']
-      let currentSection = 'home'
-
-      // checks which section is mostly within the viewport
-      for (const section of sections) {
-        const element = document.getElementById(section)
-        if (element) {
-          const rect = element.getBoundingClientRect()
-          if (rect.top <= window.innerHeight / 2) {
-            currentSection = section
-          }
+      setScrolled(window.scrollY > 20)
+      const sectionIds = navItems.map((i) => i.section)
+      let current = 'hero'
+      for (const id of sectionIds) {
+        const el = document.getElementById(id)
+        if (el) {
+          const rect = el.getBoundingClientRect()
+          if (rect.top <= window.innerHeight * 0.45) current = id
         }
       }
-
-      setActiveSection(currentSection)
+      setActiveSection(current)
     }
-
-    window.addEventListener('scroll', handleScroll)
+    window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const navItems = [
-    { href: '/', label: 'Home', section: 'home' },
-    { href: '/about', label: 'About', section: 'about' },
-    { href: '/contact', label: 'Contact', section: 'contact' },
-    { href: '/chat', label: 'Chat', section: 'chat' },
-    { href: '/register', label: 'Register', section: 'register' },
-  ]
+  const scrollTo = (section: string) => {
+    const el = document.getElementById(section)
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
+    setMobileOpen(false)
+  }
 
   return (
-    <div>
-      <div className="max-w-screen hidden sm:hidden fixed bg-white/5 backdrop-blur-lg top-2 right-1/2 translate-x-1/2 z-100 md:flex gap-6 2xl:gap-8 text-white transition-all duration-300 px-10 py-6">
+    <>
+      {/* Desktop navbar — floating pill */}
+      <nav
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-center gap-1 px-4 py-2 rounded-full transition-all duration-500 ${
+          scrolled
+            ? 'glass-strong shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+            : 'glass'
+        }`}
+      >
+        <Link href="/" className="flex items-center gap-2 pr-4 mr-2 border-r border-white/10">
+          <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center">
+            <span className="text-white text-xs font-bold leading-none">U</span>
+          </div>
+          <span className="text-white font-semibold text-sm tracking-tight">UniLife</span>
+        </Link>
+
         {navItems.map((item) => (
-          <Link
+          <button
             key={item.section}
-            href={item.href}
-            className={`m-auto hover:scale-110 transition-all duration-300 ${activeSection === item.section
-              ? 'font-semibold text-2xl'
-              : 'text-xl'
-              }
-              ${item.label == 'Register' && "bg-white text-black px-3 py-2"}
-              `
-            }
+            onClick={() => scrollTo(item.section)}
+            className={`relative px-4 py-1.5 rounded-full text-sm transition-all duration-200 ${
+              activeSection === item.section
+                ? 'text-white bg-white/10'
+                : 'text-white/50 hover:text-white/80 hover:bg-white/[0.05]'
+            }`}
           >
             {item.label}
-          </Link>
+          </button>
         ))}
-      </div>
-      <div
-        className={`block sm:block md:hidden fixed z-100 h-10 bg-white/5 backdrop-blur-lg transition-all duration-500 text-white ${isExpanded ? "h-screen w-screen" : "w-10 top-4 left-4"}`}
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <svg className={`${isExpanded ? "hidden" : "block"} p-1 m-auto`} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M3 4H21V6H3V4ZM3 11H21V13H3V11ZM3 18H21V20H3V18Z"></path></svg>
-        <div className='absolute flex flex-col gap-4 top-1/2 left-1/2 -translate-y-1/2 -translate-x-1/2'>
-          {navItems.map((item) => (
-            <Link
-              key={item.section}
-              href={item.href}
-              className={`m-auto hover:scale-110 transition-all duration-300 ${activeSection === item.section
-                ? 'font-semibold text-2xl'
-                : 'text-xl'
-                } ${isExpanded ? "block" : "hidden"}
-                ${item.label == 'Register' && "bg-white text-black px-3 py-2"}
-              `}
-            >
-              {item.label}
-            </Link>
-          ))}
+
+        <div className="flex items-center gap-2 pl-4 ml-2 border-l border-white/10">
+          <Link
+            href="/login"
+            className="px-4 py-1.5 rounded-full text-sm text-white/60 hover:text-white hover:bg-white/[0.06] transition-all duration-200"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/signup"
+            className="px-4 py-1.5 rounded-full text-sm bg-white text-black font-semibold hover:bg-white/90 transition-all duration-200 hover:scale-105"
+          >
+            Sign up
+          </Link>
         </div>
+      </nav>
 
-      </div>
+      {/* Mobile navbar */}
+      <nav className="fixed top-4 left-4 right-4 z-50 flex md:hidden items-center justify-between px-5 py-3 rounded-2xl glass">
+        <Link href="/" className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center">
+            <span className="text-white text-xs font-bold leading-none">U</span>
+          </div>
+          <span className="text-white font-semibold text-sm">UniLife</span>
+        </Link>
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="text-white/60 hover:text-white transition-colors p-1"
+          aria-label="Open menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+      </nav>
 
+      {/* Mobile menu overlay */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[60] md:hidden"
+            style={{ backgroundColor: 'rgba(6,6,14,0.9)', backdropFilter: 'blur(20px)' }}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-col h-full px-8 pt-20 pb-12"
+            >
+              <button
+                onClick={() => setMobileOpen(false)}
+                className="absolute top-6 right-6 text-white/50 hover:text-white transition-colors"
+                aria-label="Close menu"
+              >
+                <X className="w-6 h-6" />
+              </button>
 
-    </div>
+              <div className="flex flex-col gap-2 flex-1">
+                {navItems.map((item, i) => (
+                  <motion.button
+                    key={item.section}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                    onClick={() => scrollTo(item.section)}
+                    className={`text-left px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
+                      activeSection === item.section
+                        ? 'text-white bg-white/10'
+                        : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
+                    }`}
+                  >
+                    {item.label}
+                  </motion.button>
+                ))}
+              </div>
+
+              <div className="flex flex-col gap-3 mt-6">
+                <Link
+                  href="/login"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full text-center py-3 rounded-2xl glass text-white font-medium text-base"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setMobileOpen(false)}
+                  className="w-full text-center py-3 rounded-2xl bg-white text-black font-semibold text-base hover:bg-white/90 transition-colors"
+                >
+                  Sign up free
+                </Link>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   )
 }
 

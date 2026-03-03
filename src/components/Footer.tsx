@@ -1,170 +1,72 @@
 import Link from "next/link";
-import { Facebook, Twitter, Instagram, Youtube } from "lucide-react";
 
-const quickLinks = [
-  { name: "Home", href: "/" },
-  { name: "About Us", href: "/about" },
-  { name: "How It Works", href: "#" },
-  { name: "FAQ", href: "#" },
-  { name: "Contact Us", href: "/contact" },
-  { name: "Blog", href: "#" },
-];
-
-const categories = [
-  { name: "Hostels", href: "/hostels" },
-  { name: "Restaurants", href: "/restaurants" },
-  { name: "Supermarkets", href: "#" },
-  { name: "Pharmacies", href: "#" },
-  { name: "Salons", href: "#" },
-  { name: "All Services", href: "/services" },
-];
-
-const universities = [
-  { name: "NSBM Green University", href: "#" },
-  { name: "University of Colombo", href: "#" },
-  { name: "USJP Sri Jayewardenepura", href: "#" },
-];
-
-const socialLinks = [
-  { icon: Facebook, href: "#", hoverColor: "hover:bg-cyan-600" },
-  { icon: Twitter, href: "#", hoverColor: "hover:bg-cyan-600" },
-  { icon: Instagram, href: "#", hoverColor: "hover:bg-green-600" },
-  { icon: Youtube, href: "#", hoverColor: "hover:bg-red-600" },
-];
+const links = {
+  Platform: [
+    { label: "Browse services", href: "/browse" },
+    { label: "List your business", href: "/signup?role=provider" },
+    { label: "Student sign-up", href: "/signup" },
+    { label: "AI Chat (UniBot)", href: "/chat" },
+  ],
+  Universities: [
+    { label: "NSBM Green University", href: "#" },
+    { label: "University of Colombo", href: "#" },
+    { label: "Uni. of Sri Jayewardenepura", href: "#" },
+  ],
+  Legal: [
+    { label: "Privacy Policy", href: "#" },
+    { label: "Terms of Service", href: "#" },
+    { label: "Cookie Policy", href: "#" },
+  ],
+};
 
 export default function Footer() {
   return (
-    <footer className="bg-gray-950 text-white py-12 border-t border-gray-800">
-      <div className="max-w-7xl mx-auto px-6">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
-          {/* Brand */}
-          <div>
-            <Link href="/" className="flex items-center space-x-2 mb-4 group">
-              <div className="w-10 h-10 gradient-bg rounded-lg flex items-center justify-center glow transition-transform duration-300 group-hover:scale-110">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                  />
-                </svg>
+    <footer className="relative border-t border-white/[0.06] px-6 py-16">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid md:grid-cols-4 gap-10 mb-12">
+          {/* Brand column */}
+          <div className="md:col-span-1">
+            <Link href="/" className="flex items-center gap-2 mb-4">
+              <div className="w-7 h-7 rounded-xl glass-strong flex items-center justify-center">
+                <span className="text-white text-xs font-bold">U</span>
               </div>
-              <span className="text-xl font-bold">Green StudentHub</span>
+              <span className="text-white font-semibold tracking-tight">UniLife</span>
             </Link>
-            <p className="text-gray-400 mb-4">
-              Making student life easier, one click at a time. Your complete
-              guide to everything around campus.
+            <p className="text-white/40 text-sm leading-relaxed mb-6">
+              Making student life simpler, one campus at a time. Verified services, zero cost.
             </p>
-            <div className="flex space-x-3">
-              {socialLinks.map((social, index) => {
-                const Icon = social.icon;
-                return (
-                  <a
-                    key={index}
-                    href={social.href}
-                    className={`w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center ${social.hoverColor} transition-all duration-300 border border-gray-700 hover:scale-110`}
-                  >
-                    <Icon className="w-5 h-5" />
-                  </a>
-                );
-              })}
+            <a
+              href="mailto:support@studenthub.lk"
+              className="text-indigo-300/70 text-sm hover:text-indigo-300 transition-colors duration-200"
+            >
+              support@studenthub.lk
+            </a>
+          </div>
+
+          {/* Link columns */}
+          {Object.entries(links).map(([group, items]) => (
+            <div key={group}>
+              <h4 className="text-white/40 text-xs font-semibold tracking-widest uppercase mb-4">{group}</h4>
+              <ul className="flex flex-col gap-2.5">
+                {items.map((link) => (
+                  <li key={link.label}>
+                    <Link
+                      href={link.href}
+                      className="text-white/55 text-sm hover:text-white transition-colors duration-200"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </div>
-
-          {/* Quick Links */}
-          <div>
-            <h4 className="font-bold mb-4 text-white text-lg">Quick Links</h4>
-            <ul className="space-y-2 text-gray-400">
-              {quickLinks.map((link, index) => (
-                <li key={index}>
-                  <Link
-                    href={link.href}
-                    className="hover:text-cyan-400 transition-colors duration-300"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Categories */}
-          <div>
-            <h4 className="font-bold mb-4 text-white text-lg">Categories</h4>
-            <ul className="space-y-2 text-gray-400">
-              {categories.map((category, index) => (
-                <li key={index}>
-                  <Link
-                    href={category.href}
-                    className="hover:text-cyan-400 transition-colors duration-300"
-                  >
-                    {category.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Universities & Legal */}
-          <div>
-            <h4 className="font-bold mb-4 text-white text-lg">Universities</h4>
-            <ul className="space-y-2 text-gray-400 mb-6">
-              {universities.map((uni, index) => (
-                <li key={index}>
-                  <Link
-                    href={uni.href}
-                    className="hover:text-cyan-400 transition-colors duration-300"
-                  >
-                    {uni.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-            <h4 className="font-bold mb-4 text-white text-lg">Legal</h4>
-            <ul className="space-y-2 text-gray-400">
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-cyan-400 transition-colors duration-300"
-                >
-                  Privacy Policy
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="#"
-                  className="hover:text-cyan-400 transition-colors duration-300"
-                >
-                  Terms of Service
-                </Link>
-              </li>
-            </ul>
-          </div>
+          ))}
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-8">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-gray-400 text-sm">
-              © 2024 Green StudentHub. All rights reserved.
-            </p>
-            <div className="flex items-center space-x-4 text-sm text-gray-400">
-              <span>Made with ❤️ for students</span>
-              <span>•</span>
-              <a
-                href="mailto:support@studenthub.lk"
-                className="hover:text-cyan-400 transition-colors duration-300"
-              >
-                support@studenthub.lk
-              </a>
-            </div>
-          </div>
+        {/* Bottom bar */}
+        <div className="border-t border-white/[0.06] pt-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-white/25 text-sm">© {new Date().getFullYear()} UniLife. All rights reserved.</p>
+          <p className="text-white/25 text-sm">Made with care for students across Sri Lanka ✦</p>
         </div>
       </div>
     </footer>
