@@ -31,11 +31,11 @@ const Navbar = () => {
   }, [])
 
   const navItems = [
-    { href: '#home', label: 'Home', section: 'home' },
-    { href: '#about', label: 'About', section: 'about' },
-    { href: '#people', label: 'People', section: 'people' },
-    { href: '#chat', label: 'Chat', section: 'chat' },
-    { href: '#register', label: 'Register', section: 'register' },
+    { href: '/', label: 'Home', section: 'home' },
+    { href: '/about', label: 'About', section: 'about' },
+    { href: '/contact', label: 'Contact', section: 'contact' },
+    { href: '/chat', label: 'Chat', section: 'chat' },
+    { href: '/register', label: 'Register', section: 'register' },
   ]
 
   return (

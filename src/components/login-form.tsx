@@ -6,28 +6,72 @@ import { Button } from "@/components/ui/button"
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { auth } from "@/config/firebase.config"
+import { auth, db } from "@/config/firebase.config"
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { GoogleAuthProvider, signInWithPopup, OAuthProvider } from "firebase/auth";
 import { useRouter } from "next/navigation";
+import { doc, getDoc } from "firebase/firestore";
+import Cookies from "js-cookie";
+
+type UserRole = "student" | "provider" | "admin";
+
+async function getUserRole(uid: string): Promise<UserRole | null> {
+  // Check unified users collection first
+  const userDoc = await getDoc(doc(db, "users", uid));
+  if (userDoc.exists()) {
+    return userDoc.data().role as UserRole;
+  }
+
+  // Check legacy students collection
+  const studentDoc = await getDoc(doc(db, "students", uid));
+  if (studentDoc.exists()) {
+    return "student";
+  }
+
+  // Check legacy providers collection
+  const providerDoc = await getDoc(doc(db, "providers", uid));
+  if (providerDoc.exists()) {
+    return "provider";
+  }
+
+  return null;
+}
+
+function getDashboardUrl(role: UserRole): string {
+  switch (role) {
+    case "student":
+      return "/student/dashboard";
+    case "provider":
+      return "/provider/dashboard";
+    case "admin":
+      return "/admin/dashboard";
+    default:
+      return "/";
+  }
+}
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [popupLoading, setPopupLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
       const userCredential = await signInWithEmailAndPassword(
@@ -36,27 +80,59 @@ export function LoginForm({
         password
       );
 
-      console.log("Logged in user:", userCredential.user);
-      alert("Login successful!");
-      router.push("/student/dashboard");
+      // Get user role and redirect accordingly
+      const role = await getUserRole(userCredential.user.uid);
+      
+      if (!role) {
+        setError("User account not found. Please sign up first.");
+        return;
+      }
+
+      // Set cookies for middleware
+      const token = await userCredential.user.getIdToken();
+      Cookies.set("auth-token", token, { expires: 7 });
+      Cookies.set("user-role", role, { expires: 7 });
+
+      // Redirect based on role
+      const dashboardUrl = getDashboardUrl(role);
+      router.push(dashboardUrl);
 
     } catch (error: any) {
       console.error(error.message);
-      alert(error.message);
+      setError(error.message || "Login failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleGoogleLogin = async () => {
     if (popupLoading) return;
     setPopupLoading(true);
+    setError("");
+    
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push("/student/dashboard");
+      const result = await signInWithPopup(auth, provider);
+      
+      // Get user role
+      const role = await getUserRole(result.user.uid);
+      
+      if (!role) {
+        // New Google user - redirect to signup selection
+        router.push("/signup?google=true");
+        return;
+      }
+
+      // Set cookies for middleware
+      const token = await result.user.getIdToken();
+      Cookies.set("auth-token", token, { expires: 7 });
+      Cookies.set("user-role", role, { expires: 7 });
+
+      router.push(getDashboardUrl(role));
     } catch (error: any) {
       if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
         console.error(error.message);
-        alert(error.message);
+        setError(error.message);
       }
     } finally {
       setPopupLoading(false);
@@ -66,25 +142,37 @@ export function LoginForm({
   const handleAppleLogin = async () => {
     if (popupLoading) return;
     setPopupLoading(true);
+    setError("");
+    
     try {
       const provider = new OAuthProvider("apple.com");
-
       provider.addScope("email");
       provider.addScope("name");
 
       const result = await signInWithPopup(auth, provider);
+      
+      // Get user role
+      const role = await getUserRole(result.user.uid);
+      
+      if (!role) {
+        router.push("/signup?apple=true");
+        return;
+      }
 
-      console.log("Apple user:", result.user);
+      const token = await result.user.getIdToken();
+      Cookies.set("auth-token", token, { expires: 7 });
+      Cookies.set("user-role", role, { expires: 7 });
 
+      router.push(getDashboardUrl(role));
     } catch (error: any) {
       if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
         console.error(error.message);
+        setError(error.message);
       }
     } finally {
       setPopupLoading(false);
     }
   };
-  const router = useRouter();
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -115,6 +203,8 @@ export function LoginForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
+          </Field>
+          <Field>
             <FieldLabel htmlFor="password">Password</FieldLabel>
             <Input
               id="password"
@@ -125,8 +215,11 @@ export function LoginForm({
               onChange={(e) => setPassword(e.target.value)}
             />
           </Field>
+          {error && <FieldError className="text-center">{error}</FieldError>}
           <Field>
-            <Button type="submit">Login</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Signing in..." : "Login"}
+            </Button>
           </Field>
           <FieldSeparator>Or</FieldSeparator>
           <Field className="grid gap-4 sm:grid-cols-2">
