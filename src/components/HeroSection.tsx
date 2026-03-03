@@ -31,7 +31,7 @@ export default function HeroSection() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <Link href="#categories">
+              <Link href="/signup">
                 <Button
                   size="lg"
                   className="gradient-bg text-white px-8 py-6 rounded-xl font-semibold glow hover:scale-105 transition-all duration-300 group"
