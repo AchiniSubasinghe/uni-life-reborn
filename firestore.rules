@@ -1,0 +1,158 @@
+// Firestore Security Rules for UniLife Platform
+// Copy this to your Firebase Console > Firestore > Rules
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && getUserRole() == 'admin';
+    }
+    
+    function isProvider() {
+      return isAuthenticated() && getUserRole() == 'provider';
+    }
+    
+    function isStudent() {
+      return isAuthenticated() && getUserRole() == 'student';
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own document, admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Users can create their own document during signup
+      allow create: if isOwner(userId);
+      
+      // Users can update their own document (except role), admins can update any
+      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role', 'permissions'])) 
+                    || isAdmin();
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // Legacy students collection
+    match /students/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Legacy providers collection
+    match /providers/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Businesses collection
+    match /businesses/{businessId} {
+      // Anyone can read approved businesses
+      // Providers can read their own pending/rejected businesses
+      // Admins can read all businesses
+      allow read: if resource.data.status == 'approved'
+                  || (isProvider() && resource.data.providerId == request.auth.uid)
+                  || isAdmin();
+      
+      // Only providers can create businesses
+      allow create: if isProvider() 
+                    && request.resource.data.providerId == request.auth.uid
+                    && request.resource.data.status == 'pending';
+      
+      // Providers can update their own businesses (except status)
+      // Admins can update any business (including status)
+      allow update: if (isProvider() 
+                       && resource.data.providerId == request.auth.uid 
+                       && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'approvedAt', 'approvedBy', 'rejectedAt', 'rejectedBy']))
+                    || isAdmin();
+      
+      // Providers can delete their own businesses, admins can delete any
+      allow delete: if (isProvider() && resource.data.providerId == request.auth.uid)
+                    || isAdmin();
+    }
+    
+    // Reviews collection
+    match /reviews/{reviewId} {
+      // Anyone can read visible reviews
+      // Review owner can read their own reviews
+      // Business owner can read reviews for their businesses
+      // Admins can read all reviews
+      allow read: if resource.data.isVisible == true
+                  || isOwner(resource.data.userId)
+                  || isAdmin();
+      
+      // Only authenticated users (students) can create reviews
+      allow create: if isAuthenticated()
+                    && request.resource.data.userId == request.auth.uid
+                    && request.resource.data.isVisible == true
+                    && request.resource.data.isReported == false;
+      
+      // Users can update their own reviews (comment only)
+      // Providers can add responses to reviews on their businesses
+      // Admins can update any review (moderation)
+      allow update: if (isOwner(resource.data.userId) 
+                       && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comment', 'rating', 'updatedAt']))
+                    || isAdmin();
+      
+      // Users can delete their own reviews, admins can delete any
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+    
+    // Favorites collection
+    match /favorites/{favoriteId} {
+      // Users can read their own favorites
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // Users can create their own favorites
+      allow create: if isAuthenticated() && request.resource.data.userId == request.auth.uid;
+      
+      // Users can delete their own favorites
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      
+      // No updates needed for favorites
+      allow update: if false;
+    }
+    
+    // Categories collection
+    match /categories/{categoryId} {
+      // Anyone can read categories
+      allow read: if true;
+      
+      // Only admins can manage categories
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Platform settings
+    match /settings/{settingId} {
+      // Anyone can read settings
+      allow read: if true;
+      
+      // Only admins can update settings
+      allow write: if isAdmin();
+    }
+    
+    // Analytics/Stats (read-only for users, write for system/admin)
+    match /analytics/{docId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}
