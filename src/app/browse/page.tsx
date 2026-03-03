@@ -233,8 +233,8 @@ function BrowsePageContent() {
                       className={cn(
                         "w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors",
                         filters.minRating === rating
-                          ? "bg-primary/10 text-primary"
-                          : "hover:bg-muted"
+                          ? "bg-indigo-500/15 border border-indigo-400/20 text-indigo-300"
+                          : "hover:bg-white/[0.06] text-white/70 hover:text-white"
                       )}
                     >
                       <StarRating rating={rating} readonly size="sm" />

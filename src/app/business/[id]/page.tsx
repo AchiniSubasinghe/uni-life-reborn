@@ -227,7 +227,7 @@ export default function BusinessDetailsPage() {
             <div>
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary mb-2">
+                  <span className="inline-flex items-center rounded-full bg-indigo-500/15 border border-indigo-400/20 px-2.5 py-0.5 text-xs font-medium text-indigo-300 mb-2">
                     {getCategoryName(business.category)}
                   </span>
                   <h1 className="text-3xl font-bold">{business.name}</h1>
