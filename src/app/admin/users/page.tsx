@@ -23,9 +23,9 @@ import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 const ROLE_COLORS: Record<UserRole, string> = {
-  student: "bg-blue-100 text-blue-700",
-  provider: "bg-purple-100 text-purple-700",
-  admin: "bg-red-100 text-red-700",
+  student: "bg-blue-500/15 border border-blue-400/20 text-blue-300",
+  provider: "bg-violet-500/15 border border-violet-400/20 text-violet-300",
+  admin: "bg-red-500/15 border border-red-400/20 text-red-300",
 };
 
 const ROLE_ICONS: Record<UserRole, any> = {
@@ -156,8 +156,8 @@ export default function AdminUsersPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
+                <GraduationCap className="h-5 w-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.students}</p>
@@ -170,8 +170,8 @@ export default function AdminUsersPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-purple-600" />
+              <div className="h-10 w-10 rounded-full bg-violet-500/15 border border-violet-400/20 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-violet-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.providers}</p>
@@ -184,8 +184,8 @@ export default function AdminUsersPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
-                <Shield className="h-5 w-5 text-red-600" />
+              <div className="h-10 w-10 rounded-full bg-red-500/15 border border-red-400/20 flex items-center justify-center">
+                <Shield className="h-5 w-5 text-red-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.admins}</p>
@@ -243,8 +243,8 @@ export default function AdminUsersPage() {
                     <tr key={user.uid} className="border-b last:border-0">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                            <span className="text-sm font-semibold text-primary">
+                          <div className="h-10 w-10 rounded-full bg-indigo-500/15 border border-indigo-400/20 flex items-center justify-center">
+                            <span className="text-sm font-semibold text-indigo-300">
                               {getUserDisplayName(user).charAt(0).toUpperCase()}
                             </span>
                           </div>
@@ -286,8 +286,8 @@ export default function AdminUsersPage() {
                           className={cn(
                             "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
                             user.isActive !== false
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                              ? "bg-emerald-500/15 border border-emerald-400/20 text-emerald-300"
+                              : "bg-red-500/15 border border-red-400/20 text-red-300"
                           )}
                         >
                           {user.isActive !== false ? "Active" : "Disabled"}
