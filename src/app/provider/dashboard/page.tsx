@@ -68,8 +68,8 @@ export default function ProviderDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{businesses.length}</p>
@@ -82,8 +82,8 @@ export default function ProviderDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-yellow-600" />
+              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{pendingCount}</p>
@@ -96,8 +96,8 @@ export default function ProviderDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center">
+                <CheckCircle className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{approvedCount}</p>
@@ -110,8 +110,8 @@ export default function ProviderDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center">
-                <Star className="h-5 w-5 text-orange-600" />
+              <div className="h-10 w-10 rounded-full bg-orange-500/15 border border-orange-400/20 flex items-center justify-center">
+                <Star className="h-5 w-5 text-orange-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{avgRating.toFixed(1)}</p>
@@ -143,15 +143,15 @@ export default function ProviderDashboard() {
 
       {/* Rejected Alert */}
       {rejectedCount > 0 && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-red-400/20" style={{ background: 'rgba(239,68,68,0.08)' }}>
           <CardContent className="py-4">
             <div className="flex items-center gap-3">
-              <XCircle className="h-5 w-5 text-red-600" />
+              <XCircle className="h-5 w-5 text-red-400" />
               <div className="flex-1">
-                <p className="font-medium text-red-900">
+                <p className="font-medium text-red-300">
                   {rejectedCount} {rejectedCount === 1 ? "listing was" : "listings were"} rejected
                 </p>
-                <p className="text-sm text-red-700">
+                <p className="text-sm text-red-300/70">
                   Check the rejection reason and update your listing
                 </p>
               </div>
@@ -169,7 +169,7 @@ export default function ProviderDashboard() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Your Businesses</h2>
-          <Link href="/provider/businesses" className="text-sm text-primary hover:underline flex items-center">
+          <Link href="/provider/businesses" className="text-sm text-indigo-300 hover:text-indigo-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>
@@ -177,7 +177,7 @@ export default function ProviderDashboard() {
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-72 animate-pulse bg-muted" />
+              <Card key={i} className="h-72 animate-pulse bg-white/[0.04]" />
             ))}
           </div>
         ) : businesses.length > 0 ? (

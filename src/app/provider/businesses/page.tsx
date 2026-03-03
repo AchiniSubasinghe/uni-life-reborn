@@ -26,17 +26,17 @@ import Link from "next/link";
 const statusConfig: Record<BusinessStatus, { label: string; color: string; icon: React.ElementType }> = {
   pending: { 
     label: "Pending Review", 
-    color: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    color: "bg-amber-500/15 border border-amber-400/20 text-amber-300",
     icon: Clock
   },
   approved: { 
     label: "Approved", 
-    color: "bg-green-100 text-green-800 border-green-200",
+    color: "bg-emerald-500/15 border border-emerald-400/20 text-emerald-300",
     icon: CheckCircle
   },
   rejected: { 
     label: "Rejected", 
-    color: "bg-red-100 text-red-800 border-red-200",
+    color: "bg-red-500/15 border border-red-400/20 text-red-300",
     icon: XCircle
   },
 };
@@ -278,12 +278,12 @@ export default function ProviderBusinessesPage() {
 
                       {/* Rejection Reason */}
                       {business.status === "rejected" && business.rejectionReason && (
-                        <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                        <div className="bg-red-500/10 border border-red-400/20 rounded-lg p-3 mb-4">
                           <div className="flex items-start gap-2">
-                            <AlertCircle className="h-4 w-4 text-red-500 mt-0.5" />
+                            <AlertCircle className="h-4 w-4 text-red-400 mt-0.5" />
                             <div>
-                              <p className="text-sm font-medium text-red-800">Rejection Reason:</p>
-                              <p className="text-sm text-red-700">{business.rejectionReason}</p>
+                              <p className="text-sm font-medium text-red-300">Rejection Reason:</p>
+                              <p className="text-sm text-red-300/70">{business.rejectionReason}</p>
                             </div>
                           </div>
                         </div>
