@@ -70,7 +70,7 @@ export function BusinessCard({
           
           {/* Category Badge */}
           <div className="absolute top-2 left-2">
-            <span className="inline-flex items-center rounded-full bg-background/90 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm">
+            <span className="inline-flex items-center rounded-full bg-black/50 border border-white/10 px-2.5 py-0.5 text-xs font-medium backdrop-blur-sm text-white/80">
               {getCategoryName(business.category)}
             </span>
           </div>
@@ -81,7 +81,7 @@ export function BusinessCard({
               variant="ghost"
               size="icon-sm"
               className={cn(
-                "absolute top-2 right-2 bg-background/90 backdrop-blur-sm hover:bg-background",
+                "absolute top-2 right-2 bg-black/50 border border-white/10 backdrop-blur-sm hover:bg-black/70",
                 favorited && "text-red-500"
               )}
               onClick={handleFavoriteClick}
@@ -96,14 +96,14 @@ export function BusinessCard({
           {/* Status Badge for Providers */}
           {business.status === "pending" && (
             <div className="absolute bottom-2 left-2">
-              <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+              <span className="inline-flex items-center rounded-full bg-amber-500/15 border border-amber-400/20 px-2.5 py-0.5 text-xs font-medium text-amber-300">
                 Pending Approval
               </span>
             </div>
           )}
           {business.status === "rejected" && (
             <div className="absolute bottom-2 left-2">
-              <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+              <span className="inline-flex items-center rounded-full bg-red-500/15 border border-red-400/20 px-2.5 py-0.5 text-xs font-medium text-red-300">
                 Rejected
               </span>
             </div>
@@ -113,7 +113,7 @@ export function BusinessCard({
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg truncate group-hover:text-primary">
+              <h3 className="font-semibold text-lg truncate group-hover:text-indigo-300 transition-colors">
                 {business.name}
               </h3>
               <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
@@ -128,7 +128,7 @@ export function BusinessCard({
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-3 pt-3 border-t">
+          <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/[0.07]">
             <div className="flex items-center gap-1">
               <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium">

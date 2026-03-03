@@ -43,15 +43,15 @@ export function CategoryCard({ category, href, className }: CategoryCardProps) {
     <Link href={linkHref}>
       <Card
         className={cn(
-          "group cursor-pointer transition-all hover:shadow-md hover:border-primary/50",
+          "group cursor-pointer transition-all hover:shadow-[0_8px_40px_rgba(100,80,255,0.15)] hover:border-white/20",
           className
         )}
       >
         <CardContent className="p-6 flex flex-col items-center text-center">
-          <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
-            <Icon className="h-7 w-7 text-primary" />
+          <div className="h-14 w-14 rounded-full bg-indigo-500/15 border border-indigo-400/20 flex items-center justify-center mb-4 group-hover:bg-indigo-500/25 transition-colors">
+            <Icon className="h-7 w-7 text-indigo-300" />
           </div>
-          <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-lg group-hover:text-indigo-300 transition-colors">
             {category.name}
           </h3>
           <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
@@ -91,8 +91,8 @@ export function CategoryItem({
       className={cn(
         "w-full flex items-center gap-3 px-3 py-2 rounded-md text-left transition-colors",
         isSelected
-          ? "bg-primary/10 text-primary"
-          : "hover:bg-muted text-foreground"
+          ? "bg-indigo-500/15 border border-indigo-400/20 text-indigo-300"
+          : "hover:bg-white/[0.06] text-white/70 hover:text-white"
       )}
     >
       <Icon className="h-4 w-4 flex-shrink-0" />
