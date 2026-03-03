@@ -15,6 +15,7 @@ const publicRoutes = [
   "/signup",
   "/about",
   "/contact",
+  "/chat",
   "/services",
   "/browse",
   "/business", // Public business listing pages
