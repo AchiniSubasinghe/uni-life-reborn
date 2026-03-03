@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { GalleryVerticalEnd, Eye, EyeOff } from "lucide-react"
+import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { createUserWithEmailAndPassword } from "firebase/auth"
 import { doc, setDoc, serverTimestamp } from "firebase/firestore"
@@ -93,20 +93,27 @@ export function StudentSignUpForm({
 
   return (
     <div className={cn("flex flex-col gap-6 ", className)} {...props}>
-      <form onSubmit={handleSignUp} noValidate>
+      <div
+        className="relative overflow-hidden rounded-2xl p-7 flex flex-col gap-6"
+        style={{
+          background: 'rgba(255,255,255,0.045)',
+          backdropFilter: 'blur(32px)',
+          border: '1px solid rgba(255,255,255,0.09)',
+        }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-white/[0.07] to-transparent pointer-events-none rounded-2xl" />
+      <form onSubmit={handleSignUp} noValidate className="relative z-10">
         <FieldGroup>
           {/* Header */}
-          <div className="flex flex-col items-center gap-1 text-center border-black-400 ">
-            <a href="#" className="flex flex-col items-center gap-2 font-medium">
-              <div className="flex size-8 items-center justify-center rounded-md">
-                <GalleryVerticalEnd className="size-6" />
-              </div>
-              <span className="sr-only">UniLife.</span>
-            </a>
-            <h1 className="text-xl font-bold dark:text-white">Create a Student Account</h1>
-            <FieldDescription>
-              Already have an account? <Link href="/login">Sign In</Link>
-            </FieldDescription>
+          <div className="flex flex-col items-center gap-1 text-center">
+            <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 border border-white/15 mb-1">
+              <span className="text-white font-bold text-base">U</span>
+            </div>
+            <h1 className="text-xl font-bold text-white">Create a Student Account</h1>
+            <p className="text-sm text-white/45">
+              Already have an account?{" "}
+              <Link href="/login" className="text-indigo-300 hover:text-indigo-200 transition-colors">Sign In</Link>
+            </p>
           </div>
 
           <Field>
@@ -212,13 +219,13 @@ export function StudentSignUpForm({
                 }}
                 className="mt-0.5 accent-primary"
               />
-              <span className="text-muted-foreground dark:text-muted-foreground">
+              <span className="text-white/45">
                 I agree to the{" "}
-                <Link href="/terms" className="underline underline-offset-4 hover:text-primary">
+                <Link href="/terms" className="underline underline-offset-4 hover:text-indigo-300">
                   Terms of Service
                 </Link>{" "}
                 and{" "}
-                <Link href="/privacy" className="underline underline-offset-4 hover:text-primary">
+                <Link href="/privacy" className="underline underline-offset-4 hover:text-indigo-300">
                   Privacy Policy
                 </Link>
               </span>
@@ -260,9 +267,10 @@ export function StudentSignUpForm({
           </Field>
         </FieldGroup>
       </form>
-      <FieldDescription className="px-6 text-center">
+      <p className="px-4 text-center text-xs text-white/35 relative z-10">
         Register as a student to access verified hostels and essential services near your university.
-      </FieldDescription>
+      </p>
+      </div>
     </div>
   )
 }
