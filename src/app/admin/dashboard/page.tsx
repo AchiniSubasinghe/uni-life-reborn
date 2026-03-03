@@ -80,7 +80,7 @@ export default function AdminDashboard() {
   if (loading) {
     return (
       <div className="space-y-8">
-        <div className="h-8 w-48 bg-muted animate-pulse rounded" />
+        <div className="h-8 w-48 bg-white/[0.04] animate-pulse rounded" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
             <Card key={i} className="h-24 animate-pulse bg-muted" />
@@ -105,8 +105,8 @@ export default function AdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Users className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
+                <Users className="h-5 w-5 text-blue-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
@@ -119,8 +119,8 @@ export default function AdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.totalBusinesses || 0}</p>
@@ -133,8 +133,8 @@ export default function AdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Clock className="h-5 w-5 text-yellow-600" />
+              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.pendingApprovals || 0}</p>
@@ -147,8 +147,8 @@ export default function AdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                <MessageSquare className="h-5 w-5 text-purple-600" />
+              <div className="h-10 w-10 rounded-full bg-violet-500/15 border border-violet-400/20 flex items-center justify-center">
+                <MessageSquare className="h-5 w-5 text-violet-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.totalReviews || 0}</p>
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
             <Clock className="h-5 w-5" />
             Pending Business Approvals
           </h2>
-          <Link href="/admin/approvals" className="text-sm text-primary hover:underline flex items-center">
+          <Link href="/admin/approvals" className="text-sm text-indigo-300 hover:text-indigo-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>
@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                 <CardContent className="py-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-lg bg-muted flex items-center justify-center">
+                      <div className="h-12 w-12 rounded-lg bg-white/[0.06] border border-white/10 flex items-center justify-center">
                         <Building2 className="h-6 w-6 text-muted-foreground" />
                       </div>
                       <div>
@@ -225,7 +225,7 @@ export default function AdminDashboard() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                         onClick={() => handleApproval(business.id, "reject")}
                       >
                         <XCircle className="h-4 w-4 mr-1" />
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700"
+                        className="bg-emerald-600/80 hover:bg-emerald-600 text-white"
                         onClick={() => handleApproval(business.id, "approve")}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
@@ -264,14 +264,14 @@ export default function AdminDashboard() {
               <AlertTriangle className="h-5 w-5 text-red-500" />
               Reported Reviews
             </h2>
-            <Link href="/admin/reviews?filter=reported" className="text-sm text-primary hover:underline flex items-center">
+            <Link href="/admin/reviews?filter=reported" className="text-sm text-indigo-300 hover:text-indigo-200 flex items-center">
               View All <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
 
           <div className="space-y-3">
             {reportedReviews.slice(0, 3).map((review) => (
-              <Card key={review.id} className="border-red-200">
+              <Card key={review.id} className="border-red-400/20" style={{ background: 'rgba(239,68,68,0.06)' }}>
                 <CardContent className="py-4">
                   <div className="flex items-start justify-between">
                     <div>

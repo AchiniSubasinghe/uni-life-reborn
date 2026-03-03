@@ -177,7 +177,7 @@ export default function AdminApprovalsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>{selectedBusiness.name}</span>
-                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                  <span className="inline-flex items-center rounded-full bg-amber-500/15 border border-amber-400/20 px-2.5 py-0.5 text-xs font-medium text-amber-300">
                     Pending Review
                   </span>
                 </CardTitle>
