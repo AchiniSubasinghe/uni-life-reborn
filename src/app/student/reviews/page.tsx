@@ -228,13 +228,13 @@ export default function StudentReviewsPage() {
                     {/* Review Status Indicators */}
                     <div className="flex gap-2 mt-3">
                       {review.isReported && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                        <span className="inline-flex items-center gap-1 text-xs bg-amber-500/15 border border-amber-400/20 text-amber-300 px-2 py-1 rounded-full">
                           <AlertCircle className="h-3 w-3" />
                           Under Review
                         </span>
                       )}
                       {!review.isVisible && (
-                        <span className="inline-flex items-center gap-1 text-xs bg-red-100 text-red-800 px-2 py-1 rounded">
+                        <span className="inline-flex items-center gap-1 text-xs bg-red-500/15 border border-red-400/20 text-red-300 px-2 py-1 rounded-full">
                           Hidden
                         </span>
                       )}

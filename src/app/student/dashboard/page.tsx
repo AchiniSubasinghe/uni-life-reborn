@@ -70,8 +70,8 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Heart className="h-5 w-5 text-primary" />
+              <div className="h-10 w-10 rounded-full bg-indigo-500/15 border border-indigo-400/20 flex items-center justify-center">
+                <Heart className="h-5 w-5 text-indigo-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{favoriteCount}</p>
@@ -84,8 +84,8 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                <TrendingUp className="h-5 w-5 text-green-600" />
+              <div className="h-10 w-10 rounded-full bg-emerald-500/15 border border-emerald-400/20 flex items-center justify-center">
+                <TrendingUp className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{recentBusinesses.length}+</p>
@@ -98,8 +98,8 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center">
-                <Star className="h-5 w-5 text-yellow-600" />
+              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                <Star className="h-5 w-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{categories.length}</p>
@@ -112,8 +112,8 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-                <Search className="h-5 w-5 text-blue-600" />
+              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
+                <Search className="h-5 w-5 text-blue-400" />
               </div>
               <div>
                 <Link href="/student/browse" className="text-2xl font-bold hover:text-primary">
@@ -130,7 +130,7 @@ export default function StudentDashboard() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Browse by Category</h2>
-          <Link href="/student/browse" className="text-sm text-primary hover:underline flex items-center">
+          <Link href="/student/browse" className="text-sm text-indigo-300 hover:text-indigo-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>
@@ -149,14 +149,14 @@ export default function StudentDashboard() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Recently Added Services</h2>
-          <Link href="/student/browse" className="text-sm text-primary hover:underline flex items-center">
+          <Link href="/student/browse" className="text-sm text-indigo-300 hover:text-indigo-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3].map((i) => (
-              <Card key={i} className="h-72 animate-pulse bg-muted" />
+              <Card key={i} className="h-72 animate-pulse bg-white/[0.04]" />
             ))}
           </div>
         ) : recentBusinesses.length > 0 ? (
