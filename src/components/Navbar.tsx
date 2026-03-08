@@ -46,7 +46,7 @@ const Navbar = () => {
     <>
       {/* Desktop navbar — floating pill */}
       <nav
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-center gap-1 px-4 py-2 rounded-full transition-all duration-500 ${scrolled
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-center justify-between gap-1 px-6 py-2 rounded-full w-[900px] transition-all duration-500 ${scrolled
           ? 'glass-strong shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
           : 'glass'
           }`}
@@ -63,8 +63,8 @@ const Navbar = () => {
             key={item.section}
             onClick={() => scrollTo(item.section)}
             className={`relative px-4 py-1.5 rounded-full text-sm transition-all duration-200 ${activeSection === item.section
-                ? 'text-white bg-white/10'
-                : 'text-white/50 hover:text-white/80 hover:bg-white/[0.05]'
+              ? 'text-white bg-white/10'
+              : 'text-white/50 hover:text-white/80 hover:bg-white/[0.05]'
               }`}
           >
             {item.label}
@@ -139,8 +139,8 @@ const Navbar = () => {
                     transition={{ delay: i * 0.06 }}
                     onClick={() => scrollTo(item.section)}
                     className={`text-left px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${activeSection === item.section
-                        ? 'text-white bg-white/10'
-                        : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
+                      ? 'text-white bg-white/10'
+                      : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
                       }`}
                   >
                     {item.label}
