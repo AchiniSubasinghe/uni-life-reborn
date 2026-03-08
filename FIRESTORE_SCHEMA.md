@@ -2,22 +2,22 @@
 
 ## UniLife Platform - Database Structure
 
-This document describes the Firestore database schema for the Essential Infrastructure Information Hub platform.
+This document describes the Firestore database schema for the UniLife campus services platform.
 
 ---
 
 ## Collections Overview
 
-| Collection | Description | Primary Keys |
-|------------|-------------|--------------|
-| `users` | Unified user collection with roles | userId (Firebase Auth UID) |
-| `students` | Legacy student collection | userId |
-| `providers` | Legacy provider collection | userId |
-| `businesses` | Business listings | auto-generated |
-| `reviews` | User reviews for businesses | auto-generated |
-| `favorites` | User saved businesses | auto-generated |
-| `categories` | Business categories | auto-generated |
-| `settings` | Platform settings | document ID |
+| Collection   | Description                        | Primary Keys               |
+| ------------ | ---------------------------------- | -------------------------- |
+| `users`      | Unified user collection with roles | userId (Firebase Auth UID) |
+| `students`   | Legacy student collection          | userId                     |
+| `providers`  | Legacy provider collection         | userId                     |
+| `businesses` | Business listings                  | auto-generated             |
+| `reviews`    | User reviews for businesses        | auto-generated             |
+| `favorites`  | User saved businesses              | auto-generated             |
+| `categories` | Business categories                | auto-generated             |
+| `settings`   | Platform settings                  | document ID                |
 
 ---
 
@@ -27,27 +27,27 @@ This document describes the Firestore database schema for the Essential Infrastr
 
 ```typescript
 interface User {
-  id: string;                    // Firebase Auth UID
+  id: string; // Firebase Auth UID
   email: string;
   firstName: string;
   lastName: string;
   phone?: string;
-  role: 'student' | 'provider' | 'admin';
+  role: "student" | "provider" | "admin";
   isActive: boolean;
   createdAt: Timestamp;
   updatedAt: Timestamp;
   lastLogin?: Timestamp;
-  
+
   // Role-specific fields
   // For students:
   university?: string;
   studentId?: string;
-  
+
   // For providers:
   businessName?: string;
   businessDescription?: string;
   isVerified?: boolean;
-  
+
   // For admins:
   permissions?: {
     canManageUsers: boolean;
@@ -56,7 +56,7 @@ interface User {
     canManageCategories: boolean;
     canViewAnalytics: boolean;
   };
-  
+
   // Notification preferences
   notifications?: {
     emailNotifications: boolean;
@@ -72,29 +72,29 @@ interface Business {
   id: string;
   name: string;
   description: string;
-  categoryId: string;           // Reference to categories collection
-  providerId: string;           // Reference to users/providers collection
-  providerName: string;         // Denormalized for display
-  
+  categoryId: string; // Reference to categories collection
+  providerId: string; // Reference to users/providers collection
+  providerName: string; // Denormalized for display
+
   // Contact Information
   address: string;
   phone: string;
   email: string;
   website?: string;
-  
+
   // Location (GeoPoint for proximity searches)
   location: {
     latitude: number;
     longitude: number;
   };
-  
+
   // Media
-  images: string[];             // Storage URLs
-  
+  images: string[]; // Storage URLs
+
   // Business Details
-  priceRange: '$' | '$$' | '$$$' | '$$$$';
-  amenities: string[];          // e.g., ['wifi', 'parking', 'ac']
-  
+  priceRange: "$" | "$$" | "$$$" | "$$$$";
+  amenities: string[]; // e.g., ['wifi', 'parking', 'ac']
+
   // Operating Hours
   businessHours: {
     monday: { open: string; close: string; isClosed: boolean };
@@ -105,19 +105,19 @@ interface Business {
     saturday: { open: string; close: string; isClosed: boolean };
     sunday: { open: string; close: string; isClosed: boolean };
   };
-  
+
   // Ratings (denormalized for performance)
-  rating: number;               // Average rating (1-5)
-  reviewCount: number;          // Total number of reviews
-  
+  rating: number; // Average rating (1-5)
+  reviewCount: number; // Total number of reviews
+
   // Approval Workflow
-  status: 'pending' | 'approved' | 'rejected';
+  status: "pending" | "approved" | "rejected";
   rejectionReason?: string;
   approvedAt?: Timestamp;
-  approvedBy?: string;          // Admin userId
+  approvedBy?: string; // Admin userId
   rejectedAt?: Timestamp;
-  rejectedBy?: string;          // Admin userId
-  
+  rejectedBy?: string; // Admin userId
+
   // Metadata
   createdAt: Timestamp;
   updatedAt: Timestamp;
@@ -130,26 +130,26 @@ interface Business {
 ```typescript
 interface Review {
   id: string;
-  businessId: string;           // Reference to businesses
-  userId: string;               // Reference to users (reviewer)
-  userName: string;             // Denormalized for display
+  businessId: string; // Reference to businesses
+  userId: string; // Reference to users (reviewer)
+  userName: string; // Denormalized for display
   userAvatar?: string;
-  
+
   // Review Content
-  rating: number;               // 1-5 stars
+  rating: number; // 1-5 stars
   comment: string;
-  
+
   // Provider Response
   providerResponse?: string;
   providerResponseAt?: Timestamp;
-  
+
   // Moderation
   isReported: boolean;
   reportReason?: string;
-  reportedBy?: string;          // userId who reported
+  reportedBy?: string; // userId who reported
   reportedAt?: Timestamp;
-  isVisible: boolean;           // Hidden by admin if false
-  
+  isVisible: boolean; // Hidden by admin if false
+
   // Metadata
   createdAt: Timestamp;
   updatedAt?: Timestamp;
@@ -161,8 +161,8 @@ interface Review {
 ```typescript
 interface Favorite {
   id: string;
-  userId: string;               // Reference to users
-  businessId: string;           // Reference to businesses
+  userId: string; // Reference to users
+  businessId: string; // Reference to businesses
   createdAt: Timestamp;
 }
 ```
@@ -173,13 +173,13 @@ interface Favorite {
 interface Category {
   id: string;
   name: string;
-  slug: string;                 // URL-friendly name
+  slug: string; // URL-friendly name
   description: string;
-  icon: string;                 // Icon name or URL
-  image?: string;               // Cover image URL
-  businessCount: number;        // Denormalized count
+  icon: string; // Icon name or URL
+  image?: string; // Cover image URL
+  businessCount: number; // Denormalized count
   isActive: boolean;
-  sortOrder: number;            // Display order
+  sortOrder: number; // Display order
   createdAt: Timestamp;
   updatedAt: Timestamp;
 }
@@ -190,12 +190,12 @@ interface Category {
 ```typescript
 // Document ID: "platform"
 interface PlatformSettings {
-  requireApproval: boolean;     // Require business approval
-  allowGuestBrowsing: boolean;  // Allow non-auth browsing
+  requireApproval: boolean; // Require business approval
+  allowGuestBrowsing: boolean; // Allow non-auth browsing
   maxImagesPerBusiness: number;
-  reviewModeration: boolean;    // Pre-approve reviews
+  reviewModeration: boolean; // Pre-approve reviews
   updatedAt: Timestamp;
-  updatedBy: string;            // Admin userId
+  updatedBy: string; // Admin userId
 }
 ```
 
@@ -280,14 +280,19 @@ categories (1) ─────── (N) businesses
 
 ```javascript
 const defaultCategories = [
-  { name: 'Hostels', slug: 'hostels', icon: 'Home', sortOrder: 1 },
-  { name: 'Restaurants', slug: 'restaurants', icon: 'Utensils', sortOrder: 2 },
-  { name: 'Supermarkets', slug: 'supermarkets', icon: 'ShoppingCart', sortOrder: 3 },
-  { name: 'Pharmacies', slug: 'pharmacies', icon: 'Pill', sortOrder: 4 },
-  { name: 'Stationery', slug: 'stationery', icon: 'PenTool', sortOrder: 5 },
-  { name: 'Transport', slug: 'transport', icon: 'Bus', sortOrder: 6 },
-  { name: 'Laundry', slug: 'laundry', icon: 'Shirt', sortOrder: 7 },
-  { name: 'Cafes', slug: 'cafes', icon: 'Coffee', sortOrder: 8 },
+  { name: "Hostels", slug: "hostels", icon: "Home", sortOrder: 1 },
+  { name: "Restaurants", slug: "restaurants", icon: "Utensils", sortOrder: 2 },
+  {
+    name: "Supermarkets",
+    slug: "supermarkets",
+    icon: "ShoppingCart",
+    sortOrder: 3,
+  },
+  { name: "Pharmacies", slug: "pharmacies", icon: "Pill", sortOrder: 4 },
+  { name: "Stationery", slug: "stationery", icon: "PenTool", sortOrder: 5 },
+  { name: "Transport", slug: "transport", icon: "Bus", sortOrder: 6 },
+  { name: "Laundry", slug: "laundry", icon: "Shirt", sortOrder: 7 },
+  { name: "Cafes", slug: "cafes", icon: "Coffee", sortOrder: 8 },
 ];
 ```
 
@@ -295,17 +300,17 @@ const defaultCategories = [
 
 ```javascript
 const defaultAdmin = {
-  email: 'admin@gmail.com',
-  password: 'admiN123A',
-  role: 'admin',
-  firstName: 'System',
-  lastName: 'Admin',
+  email: "admin@gmail.com",
+  password: "admiN123A",
+  role: "admin",
+  firstName: "System",
+  lastName: "Admin",
   permissions: {
     canManageUsers: true,
     canApproveBusinesses: true,
     canModerateReviews: true,
     canManageCategories: true,
     canViewAnalytics: true,
-  }
+  },
 };
 ```

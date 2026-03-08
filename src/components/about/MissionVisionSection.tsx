@@ -5,11 +5,11 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function MissionVisionSection() {
   return (
-    <section className="py-20 bg-gray-900">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Mission */}
-          <Card className="card-hover bg-gray-950 border-gray-800 rounded-2xl">
+          <Card className="card-hover bg-background border-border rounded-2xl">
             <CardContent className="p-8">
               <div className="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mb-6 glow">
                 <Zap className="w-8 h-8 text-white" />
@@ -28,7 +28,7 @@ export default function MissionVisionSection() {
           </Card>
 
           {/* Vision */}
-          <Card className="card-hover bg-gray-950 border-gray-800 rounded-2xl">
+          <Card className="card-hover bg-background border-border rounded-2xl">
             <CardContent className="p-8">
               <div className="w-16 h-16 gradient-bg rounded-2xl flex items-center justify-center mb-6 glow">
                 <Eye className="w-8 h-8 text-white" />

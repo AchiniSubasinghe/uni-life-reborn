@@ -113,7 +113,7 @@ export function BusinessCard({
         <CardContent className="p-4">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-lg truncate group-hover:text-indigo-300 transition-colors">
+              <h3 className="font-semibold text-lg truncate group-hover:text-blue-300 transition-colors">
                 {business.name}
               </h3>
               <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">

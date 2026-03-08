@@ -169,7 +169,7 @@ export default function ProviderDashboard() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Your Businesses</h2>
-          <Link href="/provider/businesses" className="text-sm text-indigo-300 hover:text-indigo-200 flex items-center">
+          <Link href="/provider/businesses" className="text-sm text-blue-300 hover:text-blue-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>

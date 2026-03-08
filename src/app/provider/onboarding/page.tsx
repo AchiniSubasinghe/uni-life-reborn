@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
     CheckCircle,
     Building2,
@@ -30,8 +31,8 @@ const HOW_IT_WORKS = [
         title: "Create a listing",
         description:
             "Add your business details — name, category, location, hours, and photos. It only takes a few minutes.",
-        accent: "text-indigo-300",
-        bg: "bg-indigo-500/10 border-indigo-400/20",
+        accent: "text-blue-300",
+        bg: "bg-blue-500/10 border-blue-400/20",
     },
     {
         step: "02",
@@ -39,8 +40,8 @@ const HOW_IT_WORKS = [
         title: "Get reviewed & approved",
         description:
             "Our team reviews every submission to ensure accuracy and quality. You'll be notified once approved.",
-        accent: "text-violet-300",
-        bg: "bg-violet-500/10 border-violet-400/20",
+        accent: "text-cyan-300",
+        bg: "bg-cyan-500/10 border-cyan-400/20",
     },
     {
         step: "03",
@@ -91,11 +92,11 @@ export default function OnboardingPage() {
         <div className="min-h-[calc(100vh-3.5rem)] lg:min-h-screen flex flex-col items-center justify-center py-10 px-4">
             {/* Background orbs */}
             <div
-                className="orb w-[500px] h-[500px] bg-indigo-600 top-[-10%] left-[20%] pointer-events-none"
+                className="orb w-[500px] h-[500px] bg-blue-600 top-[-10%] left-[20%] pointer-events-none"
                 style={{ opacity: 0.07 }}
             />
             <div
-                className="orb w-[400px] h-[400px] bg-violet-700 bottom-[-5%] right-[10%] pointer-events-none"
+                className="orb w-[400px] h-[400px] bg-cyan-700 bottom-[-5%] right-[10%] pointer-events-none"
                 style={{ opacity: 0.07, animationDelay: "2s" }}
             />
 
@@ -106,7 +107,7 @@ export default function OnboardingPage() {
                         <span className="text-white text-sm font-bold">U</span>
                     </div>
                     <span className="text-white font-semibold">UniLife Provider</span>
-                    <Sparkles className="w-4 h-4 text-indigo-300" />
+                    <Sparkles className="w-4 h-4 text-blue-300" />
                 </div>
 
                 {/* Progress steps */}
@@ -116,10 +117,10 @@ export default function OnboardingPage() {
                             <div className="flex flex-col items-center gap-1.5">
                                 <div
                                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300 ${step > s.id
-                                            ? "bg-indigo-500 text-white"
-                                            : step === s.id
-                                                ? "bg-white/10 border border-indigo-400/40 text-indigo-300"
-                                                : "bg-white/[0.04] border border-white/10 text-white/30"
+                                        ? "bg-blue-500 text-white"
+                                        : step === s.id
+                                            ? "bg-white/10 border border-blue-400/40 text-blue-300"
+                                            : "bg-white/[0.04] border border-white/10 text-white/30"
                                         }`}
                                 >
                                     {step > s.id ? <CheckCircle className="w-4 h-4" /> : s.id}
@@ -133,7 +134,7 @@ export default function OnboardingPage() {
                             </div>
                             {i < STEPS.length - 1 && (
                                 <div
-                                    className={`w-16 sm:w-24 h-px mx-2 mb-4 transition-colors duration-500 ${step > s.id ? "bg-indigo-500/60" : "bg-white/10"
+                                    className={`w-16 sm:w-24 h-px mx-2 mb-4 transition-colors duration-500 ${step > s.id ? "bg-blue-500/60" : "bg-white/10"
                                         }`}
                                 />
                             )}
@@ -165,8 +166,8 @@ export default function OnboardingPage() {
                                 transition={{ duration: 0.3 }}
                                 className="relative z-10 flex flex-col items-center text-center gap-6"
                             >
-                                <div className="w-16 h-16 rounded-2xl bg-indigo-500/15 border border-indigo-400/20 flex items-center justify-center">
-                                    <GalleryVerticalEnd className="w-8 h-8 text-indigo-300" />
+                                <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
+                                    <GalleryVerticalEnd className="w-8 h-8 text-blue-300" />
                                 </div>
 
                                 <div>

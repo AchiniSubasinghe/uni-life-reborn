@@ -113,7 +113,7 @@ const Navbar = () => {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="fixed inset-0 z-[60] md:hidden"
-            style={{ backgroundColor: 'rgba(6,6,14,0.9)', backdropFilter: 'blur(20px)' }}
+            style={{ backgroundColor: 'rgba(7,12,20,0.92)', backdropFilter: 'blur(20px)' }}
           >
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}

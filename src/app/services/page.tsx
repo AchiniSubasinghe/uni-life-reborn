@@ -7,7 +7,7 @@ import ServicesCTASection from "@/components/services/ServicesCTASection";
 
 export default function ServicesPage() {
   return (
-    <main className="min-h-screen bg-gray-950 text-white overflow-hidden">
+    <main className="min-h-screen site-bg text-white overflow-hidden">
       <Navbar />
       <ServicesHeroSection />
       <ServicesCategoriesSection />

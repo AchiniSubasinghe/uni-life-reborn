@@ -53,7 +53,7 @@ export default function StudentLayout({
     <div className="min-h-screen site-bg">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 flex items-center px-4"
-        style={{ background: 'rgba(6,6,14,0.85)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'rgba(7,12,20,0.88)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
       >
         <Button
           variant="ghost"
@@ -77,7 +77,7 @@ export default function StudentLayout({
       {sidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 z-50"
-          style={{ backgroundColor: 'rgba(6,6,14,0.7)', backdropFilter: 'blur(4px)' }}
+          style={{ backgroundColor: 'rgba(7,12,20,0.72)', backdropFilter: 'blur(4px)' }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -88,7 +88,7 @@ export default function StudentLayout({
           "fixed top-0 left-0 z-50 h-full w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0 flex flex-col",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ background: 'rgba(8,8,18,0.90)', backdropFilter: 'blur(32px)', borderRight: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'rgba(5,9,16,0.92)', backdropFilter: 'blur(32px)', borderRight: '1px solid rgba(255,255,255,0.07)' }}
       >
           {/* Logo */}
           <div className="h-14 flex items-center justify-between px-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
@@ -106,8 +106,8 @@ export default function StudentLayout({
           {/* User Info */}
           <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-indigo-500/20 border border-indigo-400/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-semibold text-indigo-300">
+              <div className="h-9 w-9 rounded-full bg-blue-500/20 border border-blue-400/20 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-semibold text-blue-300">
                   {(userData && 'fullName' in userData ? userData.fullName?.charAt(0).toUpperCase() : null) || "S"}
                 </span>
               </div>

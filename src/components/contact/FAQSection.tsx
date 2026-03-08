@@ -40,7 +40,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-background">
       <div className="max-w-4xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white mb-4">
@@ -55,10 +55,10 @@ export default function FAQSection() {
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className={`bg-gray-900 border border-gray-800 rounded-xl overflow-hidden transition-all duration-300 ${openIndex === index ? "shadow-lg shadow-cyan-500/10" : ""}`}
+              className={`bg-background border border-border rounded-xl overflow-hidden transition-all duration-300 ${openIndex === index ? "shadow-lg shadow-cyan-500/10" : ""}`}
             >
               <button
-                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-gray-800/50 transition-colors"
+                className="w-full px-6 py-5 flex items-center justify-between text-left hover:bg-card/50 transition-colors"
                 onClick={() =>
                   setOpenIndex(openIndex === index ? null : index)
                 }

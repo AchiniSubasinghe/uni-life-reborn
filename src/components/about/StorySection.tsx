@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function StorySection() {
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <div className="fade-in-left">
@@ -34,7 +34,7 @@ export default function StorySection() {
               alt="Students"
               width={800}
               height={600}
-              className="rounded-2xl shadow-2xl border border-gray-800 hover:scale-[1.02] transition-transform duration-500"
+              className="rounded-2xl shadow-2xl border border-border hover:scale-[1.02] transition-transform duration-500"
             />
           </div>
         </div>
