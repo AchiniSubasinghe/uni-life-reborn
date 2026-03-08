@@ -11,8 +11,8 @@ export default function HeroSection() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden px-6 pt-28 pb-20"
     >
       {/* Background orbs */}
-      <div className="orb w-[600px] h-[600px] bg-indigo-600 top-[-10%] left-[-10%]" />
-      <div className="orb w-[500px] h-[500px] bg-violet-700 bottom-[-5%] right-[-5%]" style={{ animationDelay: "2s" }} />
+      <div className="orb w-[600px] h-[600px] bg-blue-600 top-[-10%] left-[-10%]" />
+      <div className="orb w-[500px] h-[500px] bg-cyan-700 bottom-[-5%] right-[-5%]" style={{ animationDelay: "2s" }} />
       <div className="orb w-[300px] h-[300px] bg-blue-500 top-[40%] left-[60%]" style={{ opacity: 0.12 }} />
 
       {/* Pill badge */}
@@ -22,7 +22,7 @@ export default function HeroSection() {
         transition={{ duration: 0.5 }}
         className="glass glass-sheen rounded-full px-5 py-2 mb-8 flex items-center gap-2 text-sm text-white/70"
       >
-        <Sparkles className="w-4 h-4 text-indigo-300" />
+        <Sparkles className="w-4 h-4 text-blue-300" />
         <span>Solving a real campus problem &middot; Sri Lankan universities</span>
       </motion.div>
 
@@ -67,7 +67,7 @@ export default function HeroSection() {
           href="/chat"
           className="group inline-flex items-center gap-2 glass glass-sheen rounded-full px-7 py-3.5 text-white font-medium hover:bg-white/10 transition-all duration-300"
         >
-          <MessageCircle className="w-4 h-4 text-indigo-300" />
+          <MessageCircle className="w-4 h-4 text-blue-300" />
           Chat with UniBot
         </Link>
       </motion.div>

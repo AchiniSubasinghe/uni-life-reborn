@@ -52,26 +52,26 @@ const categories = [
   {
     name: "Salons",
     icon: Smile,
-    gradient: "from-purple-950 to-gray-900",
-    border: "border-purple-900/50",
-    text: "text-purple-400",
-    iconBg: "from-purple-500 to-pink-600",
-    glow: "shadow-[0_0_25px_rgba(168,85,247,0.5)]",
+    gradient: "from-sky-950 to-gray-900",
+    border: "border-sky-900/50",
+    text: "text-sky-400",
+    iconBg: "from-sky-500 to-pink-600",
+    glow: "shadow-[0_0_25px_rgba(6,182,212,0.5)]",
   },
   {
     name: "More Services",
     icon: SlidersHorizontal,
-    gradient: "from-indigo-950 to-gray-900",
-    border: "border-indigo-900/50",
-    text: "text-indigo-400",
-    iconBg: "from-indigo-500 to-violet-600",
+    gradient: "from-blue-950 to-gray-900",
+    border: "border-blue-900/50",
+    text: "text-blue-400",
+    iconBg: "from-blue-500 to-cyan-600",
     glow: "shadow-[0_0_25px_rgba(99,102,241,0.5)]",
   },
 ]
 
 export default function CategorySection() {
   return (
-    <section className="py-20 bg-gray-900">
+    <section className="py-20 bg-transparent">
       <div className="max-w-7xl mx-auto px-6">
 
         {/* Header */}

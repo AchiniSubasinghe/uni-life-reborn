@@ -9,13 +9,13 @@ const categories = [
     name: "Hostels",
     description: "Find safe, affordable accommodation close to campus.",
     icon: Home,
-    accent: "text-indigo-300",
+    accent: "text-blue-300",
   },
   {
     name: "Restaurants",
     description: "Discover budget-friendly meals and local eateries nearby.",
     icon: ShoppingCart,
-    accent: "text-violet-300",
+    accent: "text-cyan-300",
   },
   {
     name: "Supermarkets",
@@ -33,7 +33,7 @@ const categories = [
     name: "Salons",
     description: "Look your best with trusted salons near your university.",
     icon: Smile,
-    accent: "text-purple-300",
+    accent: "text-sky-300",
   },
   {
     name: "More Services",
@@ -56,7 +56,7 @@ export default function ServicesSection() {
   return (
     <section id="services" className="relative py-28 px-6 overflow-hidden">
       {/* Orb */}
-      <div className="orb w-[400px] h-[400px] bg-indigo-600 top-1/2 right-[-5%]" style={{ opacity: 0.08 }} />
+      <div className="orb w-[400px] h-[400px] bg-blue-600 top-1/2 right-[-5%]" style={{ opacity: 0.08 }} />
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -67,7 +67,7 @@ export default function ServicesSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="text-indigo-300 text-sm font-medium tracking-widest uppercase mb-3">Services</p>
+          <p className="text-blue-300 text-sm font-medium tracking-widest uppercase mb-3">Services</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">What are you looking for?</h2>
           <p className="text-white/50 text-lg max-w-xl mx-auto">
             Everything a student needs, organised and verified for you.
@@ -88,7 +88,7 @@ export default function ServicesSection() {
               <motion.div key={cat.name} variants={item}>
                 <Link
                   href={`/signup?category=${cat.name.toLowerCase()}`}
-                  className="group block glass glass-sheen rounded-2xl p-6 hover:bg-white/[0.08] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(100,80,255,0.15)]"
+                  className="group block glass glass-sheen rounded-2xl p-6 hover:bg-white/[0.08] transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_8px_32px_rgba(37,99,235,0.18)]"
                 >
                   <div className={`w-10 h-10 rounded-xl glass flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 ${cat.accent}`}>
                     <Icon className="w-5 h-5" />

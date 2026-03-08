@@ -26,7 +26,7 @@ export default function AboutCTASection() {
             <Button
               variant="outline"
               size="lg"
-              className="bg-gray-800 text-gray-200 px-10 py-6 rounded-xl font-bold text-lg border-2 border-gray-700 hover:border-cyan-500 hover:text-cyan-400 transition-all duration-300"
+              className="bg-card text-gray-200 px-10 py-6 rounded-xl font-bold text-lg border-2 border-border hover:border-cyan-500 hover:text-cyan-400 transition-all duration-300"
             >
               Contact Us
             </Button>

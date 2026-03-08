@@ -26,7 +26,7 @@ const features = [
 
 export default function FeaturesSection() {
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-transparent">
       <div className="max-w-7xl mx-auto px-6">
         <div className="grid md:grid-cols-2 gap-12 items-center">
           {/* Left Content */}
@@ -68,7 +68,7 @@ export default function FeaturesSection() {
               className="rounded-2xl shadow-2xl border border-gray-800 hover:scale-[1.02] transition-transform duration-500"
             />
             {/* Floating Stats Card */}
-            <div className="absolute -top-6 -right-6 bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-gray-700 glow pulse-glow">
+            <div className="absolute -top-6 -right-6 bg-[#070c14]/90 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-white/10 glow pulse-glow">
               <div className="flex items-center space-x-2">
                 <div className="flex -space-x-2">
                   <div className="w-8 h-8 bg-cyan-500 rounded-full border-2 border-gray-800"></div>

@@ -7,7 +7,7 @@ import { ArrowRight, Play } from "lucide-react";
 
 export default function HeroSection() {
   return (
-    <section className="relative pt-32 pb-20 overflow-hidden bg-gray-950">
+    <section className="relative pt-32 pb-20 overflow-hidden bg-transparent">
       {/* Animated Blobs */}
       <div className="blob w-96 h-96 bg-cyan-500 top-20 -left-48"></div>
       <div
@@ -44,7 +44,7 @@ export default function HeroSection() {
               <Button
                 variant="outline"
                 size="lg"
-                className="bg-gray-800 text-gray-200 px-8 py-6 rounded-xl border-2 border-gray-700 hover:border-cyan-500 hover:text-cyan-400 transition-all duration-300 group"
+                className="bg-[#070c14]/80 text-gray-200 px-8 py-6 rounded-xl border-2 border-white/10 hover:border-cyan-500 hover:text-cyan-400 transition-all duration-300 group"
               >
                 <Play className="w-5 h-5 mr-2 transition-transform duration-300 group-hover:scale-110" />
                 <span>Watch Demo</span>
@@ -79,7 +79,7 @@ export default function HeroSection() {
                 className="rounded-2xl shadow-2xl border border-gray-800 hover:scale-[1.02] transition-transform duration-500"
               />
               {/* Floating Card */}
-              <div className="absolute -bottom-6 -left-6 bg-gray-800/90 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-gray-700 glow fade-in-up delay-400">
+              <div className="absolute -bottom-6 -left-6 bg-[#070c14]/90 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-white/10 glow fade-in-up delay-400">
                 <div className="flex items-center space-x-3">
                   <div className="flex -space-x-2">
                     <div className="w-8 h-8 bg-cyan-500 rounded-full border-2 border-gray-800"></div>

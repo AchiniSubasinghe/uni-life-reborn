@@ -86,7 +86,7 @@ export default function PeopleSection() {
   return (
     <section id="people" className="relative py-28 px-6 overflow-hidden">
       {/* orb */}
-      <div className="orb w-[500px] h-[500px] bg-indigo-700 top-0 right-[-5%]" style={{ opacity: 0.1 }} />
+      <div className="orb w-[500px] h-[500px] bg-blue-700 top-0 right-[-5%]" style={{ opacity: 0.1 }} />
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -97,7 +97,7 @@ export default function PeopleSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="text-indigo-300 text-sm font-medium tracking-widest uppercase mb-3">People</p>
+          <p className="text-blue-300 text-sm font-medium tracking-widest uppercase mb-3">People</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">What students are saying</h2>
           <p className="text-white/50 text-lg max-w-xl mx-auto">
             Hear from real students who use UniLife every day across Sri Lankan universities.
@@ -119,14 +119,14 @@ export default function PeopleSection() {
               className="glass glass-sheen rounded-2xl p-6 flex flex-col gap-4 hover:bg-white/[0.07] transition-all duration-300 hover:scale-[1.01]"
             >
               {/* Quote icon */}
-              <Quote className="w-6 h-6 text-indigo-300/60 flex-shrink-0" />
+              <Quote className="w-6 h-6 text-blue-300/60 flex-shrink-0" />
 
               {/* Review text */}
               <p className="text-white/65 text-sm leading-relaxed flex-1">"{r.review}"</p>
 
               {/* Service badge */}
               <div className="inline-flex self-start">
-                <span className="glass rounded-full px-3 py-1 text-xs text-indigo-300 font-medium">
+                <span className="glass rounded-full px-3 py-1 text-xs text-blue-300 font-medium">
                   {r.service}
                 </span>
               </div>

@@ -37,7 +37,7 @@ export default function Footer() {
             </p>
             <a
               href="mailto:support@studenthub.lk"
-              className="text-indigo-300/70 text-sm hover:text-indigo-300 transition-colors duration-200"
+              className="text-blue-300/70 text-sm hover:text-blue-300 transition-colors duration-200"
             >
               support@studenthub.lk
             </a>

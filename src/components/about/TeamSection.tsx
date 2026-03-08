@@ -17,7 +17,7 @@ const team = [
     name: "Dineth Fernando",
     role: "Product Manager",
     university: "USJP",
-    gradient: "from-purple-500 to-pink-600",
+    gradient: "from-sky-500 to-pink-600",
   },
   {
     name: "Amaya Jayasinghe",
@@ -29,7 +29,7 @@ const team = [
 
 export default function TeamSection() {
   return (
-    <section className="py-20 bg-gray-950">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white mb-4">Meet Our Team</h2>

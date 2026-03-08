@@ -22,8 +22,8 @@ const contactInfo = [
     icon: Mail,
     title: "Email Address",
     details: ["support@studenthub.lk", "info@studenthub.lk"],
-    gradient: "from-purple-500 to-pink-600",
-    glow: "shadow-[0_0_25px_rgba(168,85,247,0.5)]",
+    gradient: "from-sky-500 to-cyan-600",
+    glow: "shadow-[0_0_25px_rgba(6,182,212,0.5)]",
   },
   {
     icon: Clock,
@@ -36,7 +36,7 @@ const contactInfo = [
 
 export default function ContactInfoSection() {
   return (
-    <section className="py-20 bg-gray-900">
+    <section className="py-20 bg-background">
       <div className="max-w-7xl mx-auto px-6">
         <div className="text-center mb-16">
           <h2 className="text-4xl font-bold text-white mb-4">
@@ -53,7 +53,7 @@ export default function ContactInfoSection() {
             return (
               <Card
                 key={index}
-                className={`card-hover bg-gray-950 border-gray-800 rounded-2xl fade-in-up delay-${(index + 1) * 100}`}
+                className={`card-hover bg-background border-border rounded-2xl fade-in-up delay-${(index + 1) * 100}`}
               >
                 <CardContent className="p-6 text-center">
                   <div
