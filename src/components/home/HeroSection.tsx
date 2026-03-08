@@ -50,7 +50,6 @@ export default function HeroSection() {
           transition={{ duration: 0.5 }}
           className="glass glass-sheen rounded-full px-5 py-2 mb-8 flex items-center gap-2 text-sm text-white/70"
         >
-          <Sparkles className="w-4 h-4 text-amber-300" />
         </motion.div>
 
         {/* Headline */}
