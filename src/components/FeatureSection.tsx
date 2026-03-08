@@ -71,8 +71,8 @@ export default function FeaturesSection() {
             <div className="absolute -top-6 -right-6 bg-[#070c14]/90 backdrop-blur-sm p-4 rounded-xl shadow-xl border border-white/10 glow pulse-glow">
               <div className="flex items-center space-x-2">
                 <div className="flex -space-x-2">
-                  <div className="w-8 h-8 bg-cyan-500 rounded-full border-2 border-gray-800"></div>
-                  <div className="w-8 h-8 bg-blue-500 rounded-full border-2 border-gray-800"></div>
+                  <div className="w-8 h-8 bg-teal-500 rounded-full border-2 border-gray-800"></div>
+                  <div className="w-8 h-8 bg-amber-500 rounded-full border-2 border-gray-800"></div>
                   <div className="w-8 h-8 bg-green-500 rounded-full border-2 border-gray-800"></div>
                 </div>
                 <span className="text-sm font-semibold text-white">

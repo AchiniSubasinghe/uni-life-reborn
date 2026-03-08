@@ -70,7 +70,7 @@ export default function ContactSection() {
   return (
     <section id="contact" className="relative py-28 px-6 overflow-hidden">
       {/* orb */}
-      <div className="orb w-[600px] h-[600px] bg-cyan-800 bottom-[-10%] left-[-10%]" style={{ opacity: 0.08 }} />
+      <div className="orb w-[600px] h-[600px] bg-teal-800 bottom-[-10%] left-[-10%]" style={{ opacity: 0.08 }} />
 
       <div className="max-w-6xl mx-auto">
         {/* Header */}
@@ -81,7 +81,7 @@ export default function ContactSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <p className="text-blue-300 text-sm font-medium tracking-widest uppercase mb-3">Contact</p>
+          <p className="text-amber-300 text-sm font-medium tracking-widest uppercase mb-3">Contact</p>
           <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Get in touch</h2>
           <p className="text-white/50 text-lg max-w-xl mx-auto">
             Have a question, suggestion, or want to list your business? We&apos;d love to hear from you.
@@ -101,13 +101,13 @@ export default function ContactSection() {
             {sent ? (
               <div className="flex flex-col items-center justify-center h-full py-12 text-center">
                 <div className="glass rounded-full p-4 mb-4">
-                  <Send className="w-8 h-8 text-blue-300" />
+                  <Send className="w-8 h-8 text-amber-300" />
                 </div>
                 <h3 className="text-white text-xl font-semibold mb-2">Message sent!</h3>
                 <p className="text-white/50 text-sm">We&apos;ll get back to you within 24 hours.</p>
                 <button
                   onClick={() => { setSent(false); setForm({ name: "", email: "", message: "" }); }}
-                  className="mt-6 text-blue-300 text-sm hover:text-blue-200 transition-colors"
+                  className="mt-6 text-amber-300 text-sm hover:text-amber-200 transition-colors"
                 >
                   Send another message
                 </button>
@@ -194,7 +194,7 @@ export default function ContactSection() {
                   key={info.label}
                   className="glass glass-sheen rounded-2xl p-5 flex items-start gap-4 hover:bg-white/[0.07] transition-all duration-300"
                 >
-                  <div className="glass rounded-xl p-2.5 text-blue-300 flex-shrink-0">
+                  <div className="glass rounded-xl p-2.5 text-amber-300 flex-shrink-0">
                     <Icon className="w-5 h-5" />
                   </div>
                   <div>

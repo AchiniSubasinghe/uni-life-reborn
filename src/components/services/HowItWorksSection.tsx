@@ -54,7 +54,7 @@ export default function HowItWorksSection() {
               >
                 {/* Connection Line */}
                 {index < steps.length - 1 && (
-                  <div className="hidden lg:block absolute top-10 left-[60%] w-full h-0.5 bg-gradient-to-r from-cyan-500 to-green-500 opacity-30"></div>
+                  <div className="hidden lg:block absolute top-10 left-[60%] w-full h-0.5 bg-gradient-to-r from-teal-500 to-green-500 opacity-30"></div>
                 )}
 
                 {/* Step Number */}

@@ -278,7 +278,7 @@ export default function StudentBrowsePage() {
           {hasActiveFilters && (
             <div className="flex flex-wrap gap-2 mb-4">
               {searchQuery && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/15 border border-blue-400/20 text-blue-300 rounded-full text-sm">
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/15 border border-amber-400/20 text-amber-300 rounded-full text-sm">
                   Search: {searchQuery}
                   <button onClick={() => setSearchQuery("")}>
                     <X className="h-3 w-3" />
@@ -286,7 +286,7 @@ export default function StudentBrowsePage() {
                 </span>
               )}
               {selectedCategory && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/15 border border-blue-400/20 text-blue-300 rounded-full text-sm">
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/15 border border-amber-400/20 text-amber-300 rounded-full text-sm">
                   {getCategoryInfo(selectedCategory)?.icon} {getCategoryInfo(selectedCategory)?.name}
                   <button onClick={() => setSelectedCategory(null)}>
                     <X className="h-3 w-3" />
@@ -294,7 +294,7 @@ export default function StudentBrowsePage() {
                 </span>
               )}
               {priceRange && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/15 border border-blue-400/20 text-blue-300 rounded-full text-sm">
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/15 border border-amber-400/20 text-amber-300 rounded-full text-sm">
                   {"$".repeat(priceRange)}
                   <button onClick={() => setPriceRange(null)}>
                     <X className="h-3 w-3" />
@@ -302,7 +302,7 @@ export default function StudentBrowsePage() {
                 </span>
               )}
               {minRating && (
-                <span className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500/15 border border-blue-400/20 text-blue-300 rounded-full text-sm">
+                <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/15 border border-amber-400/20 text-amber-300 rounded-full text-sm">
                   {minRating}+ ⭐
                   <button onClick={() => setMinRating(null)}>
                     <X className="h-3 w-3" />

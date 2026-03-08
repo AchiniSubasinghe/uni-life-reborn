@@ -70,8 +70,8 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
-                <Heart className="h-5 w-5 text-blue-400" />
+              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                <Heart className="h-5 w-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{favoriteCount}</p>
@@ -112,8 +112,8 @@ export default function StudentDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
-                <Search className="h-5 w-5 text-blue-400" />
+              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                <Search className="h-5 w-5 text-amber-400" />
               </div>
               <div>
                 <Link href="/student/browse" className="text-2xl font-bold hover:text-primary">
@@ -130,7 +130,7 @@ export default function StudentDashboard() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Browse by Category</h2>
-          <Link href="/student/browse" className="text-sm text-blue-300 hover:text-blue-200 flex items-center">
+          <Link href="/student/browse" className="text-sm text-amber-300 hover:text-amber-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>
@@ -149,7 +149,7 @@ export default function StudentDashboard() {
       <section>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Recently Added Services</h2>
-          <Link href="/student/browse" className="text-sm text-blue-300 hover:text-blue-200 flex items-center">
+          <Link href="/student/browse" className="text-sm text-amber-300 hover:text-amber-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>

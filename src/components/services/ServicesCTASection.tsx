@@ -10,7 +10,7 @@ export default function ServicesCTASection() {
       <div className="absolute inset-0 gradient-bg opacity-90"></div>
 
       {/* Animated Blobs */}
-      <div className="blob w-96 h-96 bg-blue-400 top-10 left-20"></div>
+      <div className="blob w-96 h-96 bg-amber-400 top-10 left-20"></div>
       <div
         className="blob w-96 h-96 bg-green-400 bottom-10 right-20"
         style={{ animationDelay: "3s" }}
@@ -30,7 +30,7 @@ export default function ServicesCTASection() {
           <Link href="/contact">
             <Button
               size="lg"
-              className="bg-white text-cyan-600 px-10 py-6 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
+              className="bg-white text-teal-600 px-10 py-6 rounded-xl font-bold text-lg hover:shadow-2xl hover:scale-105 transition-all duration-300"
             >
               Request a Service
             </Button>

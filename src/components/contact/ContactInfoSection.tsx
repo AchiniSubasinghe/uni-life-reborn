@@ -8,7 +8,7 @@ const contactInfo = [
     icon: MapPin,
     title: "Our Location",
     details: ["NSBM Green University", "Pitipana, Homagama", "Sri Lanka"],
-    gradient: "from-cyan-500 to-blue-600",
+    gradient: "from-teal-500 to-amber-600",
     glow: "shadow-[0_0_25px_rgba(14,165,233,0.5)]",
   },
   {
@@ -22,8 +22,8 @@ const contactInfo = [
     icon: Mail,
     title: "Email Address",
     details: ["support@studenthub.lk", "info@studenthub.lk"],
-    gradient: "from-sky-500 to-cyan-600",
-    glow: "shadow-[0_0_25px_rgba(6,182,212,0.5)]",
+    gradient: "from-orange-500 to-teal-600",
+    glow: "shadow-[0_0_25px_rgba(20,184,166,0.5)]",
   },
   {
     icon: Clock,

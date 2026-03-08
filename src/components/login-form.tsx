@@ -194,7 +194,7 @@ export function LoginForm({
             <h1 className="text-xl font-bold text-white">Welcome to UniLife</h1>
             <p className="text-sm text-white/45">
               Don't have an account?{" "}
-              <Link href="/signup" className="text-blue-300 hover:text-blue-200 transition-colors">Sign up</Link>
+              <Link href="/signup" className="text-amber-300 hover:text-amber-200 transition-colors">Sign up</Link>
             </p>
           </div>
           <Field>

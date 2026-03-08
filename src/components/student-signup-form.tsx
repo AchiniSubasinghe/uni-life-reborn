@@ -120,7 +120,7 @@ export function StudentSignUpForm({
               <h1 className="text-xl font-bold text-white">Create a Student Account</h1>
               <p className="text-sm text-white/45">
                 Already have an account?{" "}
-                <Link href="/login" className="text-blue-300 hover:text-blue-200 transition-colors">Sign In</Link>
+                <Link href="/login" className="text-amber-300 hover:text-amber-200 transition-colors">Sign In</Link>
               </p>
             </div>
 
@@ -229,11 +229,11 @@ export function StudentSignUpForm({
                 />
                 <span className="text-white/45">
                   I agree to the{" "}
-                  <Link href="/terms" className="underline underline-offset-4 hover:text-blue-300">
+                  <Link href="/terms" className="underline underline-offset-4 hover:text-amber-300">
                     Terms of Service
                   </Link>{" "}
                   and{" "}
-                  <Link href="/privacy" className="underline underline-offset-4 hover:text-blue-300">
+                  <Link href="/privacy" className="underline underline-offset-4 hover:text-amber-300">
                     Privacy Policy
                   </Link>
                 </span>

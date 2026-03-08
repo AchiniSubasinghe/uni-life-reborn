@@ -26,10 +26,10 @@ function MessageBubble({ msg, isLatest }: { msg: ChatMessage; isLatest: boolean 
       {/* Avatar */}
       <div
         className={`w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center ${
-          isUser ? "glass-strong" : "bg-blue-500/20 border border-blue-400/20"
+          isUser ? "glass-strong" : "bg-amber-500/20 border border-amber-400/20"
         }`}
       >
-        {isUser ? <User className="w-3.5 h-3.5 text-white/70" /> : <Bot className="w-3.5 h-3.5 text-blue-300" />}
+        {isUser ? <User className="w-3.5 h-3.5 text-white/70" /> : <Bot className="w-3.5 h-3.5 text-amber-300" />}
       </div>
 
       {/* Bubble */}
@@ -38,7 +38,7 @@ function MessageBubble({ msg, isLatest }: { msg: ChatMessage; isLatest: boolean 
           isUser
             ? "bg-white/10 text-white rounded-br-sm"
             : "glass text-white/85 rounded-bl-sm"
-        } ${isLatest ? "shadow-[0_4px_20px_rgba(37,99,235,0.15)]" : ""}`}
+        } ${isLatest ? "shadow-[0_4px_20px_rgba(217,119,6,0.15)]" : ""}`}
       >
         <p className="whitespace-pre-wrap">{msg.content}</p>
       </div>
@@ -49,15 +49,15 @@ function MessageBubble({ msg, isLatest }: { msg: ChatMessage; isLatest: boolean 
 function TypingIndicator() {
   return (
     <div className="flex items-end gap-2.5">
-      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center bg-blue-500/20 border border-blue-400/20">
-        <Bot className="w-3.5 h-3.5 text-blue-300" />
+      <div className="w-7 h-7 rounded-full flex-shrink-0 flex items-center justify-center bg-amber-500/20 border border-amber-400/20">
+        <Bot className="w-3.5 h-3.5 text-amber-300" />
       </div>
       <div className="glass rounded-2xl rounded-bl-sm px-4 py-3">
         <div className="flex items-center gap-1">
           {[0, 1, 2].map((i) => (
             <motion.div
               key={i}
-              className="w-1.5 h-1.5 rounded-full bg-blue-300/60"
+              className="w-1.5 h-1.5 rounded-full bg-amber-300/60"
               animate={{ opacity: [0.3, 1, 0.3] }}
               transition={{ duration: 1.2, repeat: Infinity, delay: i * 0.2 }}
             />
@@ -134,13 +134,13 @@ export default function ChatPage() {
             <ArrowLeft className="w-4 h-4" />
           </Link>
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-blue-500/20 border border-blue-400/20 flex items-center justify-center">
-              <Bot className="w-4 h-4 text-blue-300" />
+            <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-400/20 flex items-center justify-center">
+              <Bot className="w-4 h-4 text-amber-300" />
             </div>
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="text-white font-semibold text-sm">UniBot</span>
-                <Sparkles className="w-3 h-3 text-blue-300" />
+                <Sparkles className="w-3 h-3 text-amber-300" />
               </div>
               <span className="text-white/40 text-xs">AI campus guide · Powered by Groq</span>
             </div>
@@ -157,8 +157,8 @@ export default function ChatPage() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center flex-1 text-center py-16"
           >
-            <div className="w-16 h-16 rounded-2xl bg-blue-500/15 border border-blue-400/20 flex items-center justify-center mb-5">
-              <Bot className="w-8 h-8 text-blue-300" />
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/15 border border-amber-400/20 flex items-center justify-center mb-5">
+              <Bot className="w-8 h-8 text-amber-300" />
             </div>
             <h2 className="text-white text-xl font-semibold mb-2">Hi, I&apos;m UniBot</h2>
             <p className="text-white/45 text-sm max-w-xs leading-relaxed mb-8">

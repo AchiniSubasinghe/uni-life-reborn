@@ -5,7 +5,7 @@ const team = [
     name: "Kasun Silva",
     role: "Co-Founder & CEO",
     university: "NSBM Green University",
-    gradient: "from-cyan-500 to-blue-600",
+    gradient: "from-teal-500 to-amber-600",
   },
   {
     name: "Sanjana Perera",
@@ -17,7 +17,7 @@ const team = [
     name: "Dineth Fernando",
     role: "Product Manager",
     university: "USJP",
-    gradient: "from-sky-500 to-pink-600",
+    gradient: "from-orange-500 to-pink-600",
   },
   {
     name: "Amaya Jayasinghe",
@@ -50,7 +50,7 @@ export default function TeamSection() {
               <h3 className="text-xl font-bold text-white mb-1">
                 {member.name}
               </h3>
-              <p className="text-cyan-400 text-sm mb-2">{member.role}</p>
+              <p className="text-teal-400 text-sm mb-2">{member.role}</p>
               <p className="text-gray-400 text-sm">{member.university}</p>
             </div>
           ))}

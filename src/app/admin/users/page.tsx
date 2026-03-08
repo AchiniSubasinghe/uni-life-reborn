@@ -23,8 +23,8 @@ import { formatDate } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
 const ROLE_COLORS: Record<UserRole, string> = {
-  student: "bg-blue-500/15 border border-blue-400/20 text-blue-300",
-  provider: "bg-cyan-500/15 border border-cyan-400/20 text-cyan-300",
+  student: "bg-amber-500/15 border border-amber-400/20 text-amber-300",
+  provider: "bg-teal-500/15 border border-teal-400/20 text-teal-300",
   admin: "bg-red-500/15 border border-red-400/20 text-red-300",
 };
 
@@ -156,8 +156,8 @@ export default function AdminUsersPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
-                <GraduationCap className="h-5 w-5 text-blue-400" />
+              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                <GraduationCap className="h-5 w-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.students}</p>
@@ -170,8 +170,8 @@ export default function AdminUsersPage() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-cyan-500/15 border border-cyan-400/20 flex items-center justify-center">
-                <Building2 className="h-5 w-5 text-cyan-400" />
+              <div className="h-10 w-10 rounded-full bg-teal-500/15 border border-teal-400/20 flex items-center justify-center">
+                <Building2 className="h-5 w-5 text-teal-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.providers}</p>
@@ -243,8 +243,8 @@ export default function AdminUsersPage() {
                     <tr key={user.uid} className="border-b last:border-0">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
-                            <span className="text-sm font-semibold text-blue-300">
+                          <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                            <span className="text-sm font-semibold text-amber-300">
                               {getUserDisplayName(user).charAt(0).toUpperCase()}
                             </span>
                           </div>
