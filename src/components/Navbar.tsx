@@ -46,11 +46,10 @@ const Navbar = () => {
     <>
       {/* Desktop navbar — floating pill */}
       <nav
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-center gap-1 px-4 py-2 rounded-full transition-all duration-500 ${
-          scrolled
-            ? 'glass-strong shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
-            : 'glass'
-        }`}
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-center gap-1 px-4 py-2 rounded-full transition-all duration-500 ${scrolled
+          ? 'glass-strong shadow-[0_8px_32px_rgba(0,0,0,0.5)]'
+          : 'glass'
+          }`}
       >
         <Link href="/" className="flex items-center gap-2 pr-4 mr-2 border-r border-white/10">
           <div className="w-6 h-6 rounded-lg bg-white/10 flex items-center justify-center">
@@ -63,11 +62,10 @@ const Navbar = () => {
           <button
             key={item.section}
             onClick={() => scrollTo(item.section)}
-            className={`relative px-4 py-1.5 rounded-full text-sm transition-all duration-200 ${
-              activeSection === item.section
+            className={`relative px-4 py-1.5 rounded-full text-sm transition-all duration-200 ${activeSection === item.section
                 ? 'text-white bg-white/10'
                 : 'text-white/50 hover:text-white/80 hover:bg-white/[0.05]'
-            }`}
+              }`}
           >
             {item.label}
           </button>
@@ -140,11 +138,10 @@ const Navbar = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.06 }}
                     onClick={() => scrollTo(item.section)}
-                    className={`text-left px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${
-                      activeSection === item.section
+                    className={`text-left px-4 py-3 rounded-xl text-lg font-medium transition-all duration-200 ${activeSection === item.section
                         ? 'text-white bg-white/10'
                         : 'text-white/50 hover:text-white hover:bg-white/[0.06]'
-                    }`}
+                      }`}
                   >
                     {item.label}
                   </motion.button>
