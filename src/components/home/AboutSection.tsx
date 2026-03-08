@@ -54,13 +54,14 @@ export default function AboutSection() {
               Built for the student journey
             </h2>
             <p className="text-white/55 text-lg mb-6 leading-relaxed">
-              UniLife was born out of a simple frustration — new students arriving at campus
-              had no centralised way to find the services they needed most. We set out to fix that.
+              Every year, thousands of students arrive at Sri Lankan universities and face the
+              same problem: where do I find safe, affordable housing? Where can I eat on a budget?
+              Where&apos;s the nearest pharmacy? There was no reliable answer &mdash; until now.
             </p>
             <p className="text-white/45 text-base leading-relaxed">
-              Today we serve students at NSBM Green University, University of Colombo, and
-              University of Sri Jayewardenepura with a growing directory of verified local businesses.
-              Everything is free, and always will be.
+              UniLife is a verified, student-first platform serving NSBM Green University,
+              University of Colombo, and University of Sri Jayewardenepura. Businesses are
+              manually reviewed before listing. Everything is free, and always will be.
             </p>
 
             {/* Mini stats */}

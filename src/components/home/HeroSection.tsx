@@ -23,7 +23,7 @@ export default function HeroSection() {
         className="glass glass-sheen rounded-full px-5 py-2 mb-8 flex items-center gap-2 text-sm text-white/70"
       >
         <Sparkles className="w-4 h-4 text-indigo-300" />
-        <span>The student services platform built for Sri Lankan universities</span>
+        <span>Solving a real campus problem &middot; Sri Lankan universities</span>
       </motion.div>
 
       {/* Headline */}
@@ -44,8 +44,9 @@ export default function HeroSection() {
         transition={{ duration: 0.6, delay: 0.2 }}
         className="mt-6 text-center text-lg md:text-xl text-white/55 max-w-2xl leading-relaxed"
       >
-        UniLife helps university students in Sri Lanka discover verified hostels,
-        restaurants, pharmacies, and everyday services — all in one place.
+        First-year university students in Sri Lanka arrive on campus with no idea where to find
+        safe housing, affordable food, or essential services. UniLife fixes that — a verified
+        directory, AI-powered search, and a growing community, all for free.
       </motion.p>
 
       {/* CTA buttons */}
