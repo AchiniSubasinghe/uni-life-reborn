@@ -4,7 +4,7 @@ export default function ContactHeroSection() {
   return (
     <section className="pt-32 pb-20 bg-gradient-to-b from-gray-900 to-gray-950 relative overflow-hidden">
       {/* Animated Blobs */}
-      <div className="blob w-96 h-96 bg-cyan-500 top-10 -left-48"></div>
+      <div className="blob w-96 h-96 bg-teal-500 top-10 -left-48"></div>
       <div
         className="blob w-96 h-96 bg-green-500 bottom-10 -right-48"
         style={{ animationDelay: "2s" }}

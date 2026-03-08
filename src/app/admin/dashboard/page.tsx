@@ -105,8 +105,8 @@ export default function AdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-blue-500/15 border border-blue-400/20 flex items-center justify-center">
-                <Users className="h-5 w-5 text-blue-400" />
+              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
+                <Users className="h-5 w-5 text-amber-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
@@ -147,8 +147,8 @@ export default function AdminDashboard() {
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-cyan-500/15 border border-cyan-400/20 flex items-center justify-center">
-                <MessageSquare className="h-5 w-5 text-cyan-400" />
+              <div className="h-10 w-10 rounded-full bg-teal-500/15 border border-teal-400/20 flex items-center justify-center">
+                <MessageSquare className="h-5 w-5 text-teal-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats?.totalReviews || 0}</p>
@@ -199,7 +199,7 @@ export default function AdminDashboard() {
             <Clock className="h-5 w-5" />
             Pending Business Approvals
           </h2>
-          <Link href="/admin/approvals" className="text-sm text-blue-300 hover:text-blue-200 flex items-center">
+          <Link href="/admin/approvals" className="text-sm text-amber-300 hover:text-amber-200 flex items-center">
             View All <ArrowRight className="h-4 w-4 ml-1" />
           </Link>
         </div>
@@ -264,7 +264,7 @@ export default function AdminDashboard() {
               <AlertTriangle className="h-5 w-5 text-red-500" />
               Reported Reviews
             </h2>
-            <Link href="/admin/reviews?filter=reported" className="text-sm text-blue-300 hover:text-blue-200 flex items-center">
+            <Link href="/admin/reviews?filter=reported" className="text-sm text-amber-300 hover:text-amber-200 flex items-center">
               View All <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>

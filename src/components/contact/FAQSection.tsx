@@ -67,7 +67,7 @@ export default function FAQSection() {
                   {faq.question}
                 </span>
                 {openIndex === index ? (
-                  <ChevronUp className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                  <ChevronUp className="w-5 h-5 text-teal-400 flex-shrink-0" />
                 ) : (
                   <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
                 )}

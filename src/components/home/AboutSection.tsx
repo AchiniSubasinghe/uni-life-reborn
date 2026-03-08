@@ -9,28 +9,28 @@ const features = [
     title: "Verified listings",
     description:
       "Every business is manually reviewed by our team so you always get accurate, trustworthy information.",
-    accent: "text-blue-300",
+    accent: "text-amber-300",
   },
   {
     icon: Clock,
     title: "Always up-to-date",
     description:
       "Real-time prices, opening hours, and availability — no more showing up to a closed shop.",
-    accent: "text-cyan-300",
+    accent: "text-teal-300",
   },
   {
     icon: MapPin,
     title: "Campus-centric search",
     description:
       "Results are ranked by proximity to your university, saving you time and travel costs.",
-    accent: "text-blue-300",
+    accent: "text-amber-300",
   },
   {
     icon: CheckCircle,
     title: "Student-first design",
     description:
       "Built entirely around student needs — free to use, no ads, no hidden charges.",
-    accent: "text-sky-300",
+    accent: "text-orange-300",
   },
 ];
 
@@ -38,7 +38,7 @@ export default function AboutSection() {
   return (
     <section id="about" className="relative py-28 px-6 overflow-hidden">
       {/* orb */}
-      <div className="orb w-[500px] h-[500px] bg-cyan-700 top-1/2 left-[-10%]" style={{ opacity: 0.09 }} />
+      <div className="orb w-[500px] h-[500px] bg-teal-700 top-1/2 left-[-10%]" style={{ opacity: 0.09 }} />
 
       <div className="max-w-6xl mx-auto">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -49,7 +49,7 @@ export default function AboutSection() {
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <p className="text-blue-300 text-sm font-medium tracking-widest uppercase mb-3">About UniLife</p>
+            <p className="text-amber-300 text-sm font-medium tracking-widest uppercase mb-3">About UniLife</p>
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 leading-tight">
               Built for the student journey
             </h2>

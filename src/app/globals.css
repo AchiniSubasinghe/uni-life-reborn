@@ -51,21 +51,21 @@
 :root {
   --radius: 0.75rem;
 
-  /* Surface — cold navy-black */
-  --background: oklch(0.048 0.016 255);
-  /* #070c14 */
+  /* Surface — warm near-black (campus photo carpet tone) */
+  --background: oklch(0.050 0.014 55);
+  /* #0e0a04 */
   --foreground: oklch(0.96 0 0);
   /* near-white */
 
-  /* Cards / popovers – slightly lifted glass */
-  --card: oklch(0.09 0.010 255);
+  /* Cards / popovers – slightly lifted warm glass */
+  --card: oklch(0.09 0.010 55);
   --card-foreground: oklch(0.96 0 0);
-  --popover: oklch(0.09 0.010 255);
+  --popover: oklch(0.09 0.010 55);
   --popover-foreground: oklch(0.96 0 0);
 
-  /* Primary – electric blue */
-  --primary: oklch(0.60 0.22 250);
-  --primary-foreground: oklch(0.98 0 0);
+  /* Primary – warm amber */
+  --primary: oklch(0.72 0.20 72);
+  --primary-foreground: oklch(0.10 0 0);
 
   /* Secondary – subtle glass tint */
   --secondary: oklch(1 0 0 / 7%);
@@ -85,24 +85,24 @@
   /* Borders & inputs */
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 10%);
-  --ring: oklch(0.60 0.22 250);
+  --ring: oklch(0.72 0.20 72);
 
-  /* Charts – blue / sky / cyan / teal range */
-  --chart-1: oklch(0.60 0.22 250);
-  --chart-2: oklch(0.67 0.18 220);
-  --chart-3: oklch(0.72 0.16 195);
-  --chart-4: oklch(0.68 0.14 175);
-  --chart-5: oklch(0.62 0.19 230);
+  /* Charts – amber / orange / teal range */
+  --chart-1: oklch(0.72 0.20 72);
+  --chart-2: oklch(0.68 0.19 52);
+  --chart-3: oklch(0.62 0.14 183);
+  --chart-4: oklch(0.58 0.16 165);
+  --chart-5: oklch(0.74 0.18 88);
 
-  /* Sidebar – same palette */
-  --sidebar: oklch(0.07 0.010 255);
+  /* Sidebar – warm palette */
+  --sidebar: oklch(0.07 0.010 55);
   --sidebar-foreground: oklch(0.96 0 0);
-  --sidebar-primary: oklch(0.60 0.22 250);
-  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-primary: oklch(0.72 0.20 72);
+  --sidebar-primary-foreground: oklch(0.10 0 0);
   --sidebar-accent: oklch(1 0 0 / 8%);
   --sidebar-accent-foreground: oklch(0.96 0 0);
   --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.60 0.22 250);
+  --sidebar-ring: oklch(0.72 0.20 72);
 }
 
 @layer base {
@@ -117,13 +117,13 @@
 
 /* ─── Liquid Glass Design System ─────────────────────────────────── */
 
-/* Site background – near-black navy with cold-blue radial orbs */
+/* Site background – warm near-black with amber + teal radial orbs */
 .site-bg {
-  background-color: #070c14;
+  background-color: #0e0a04;
   background-image:
-    radial-gradient(ellipse 80% 55% at 15% 10%, rgba(37, 99, 235, 0.11) 0%, transparent 65%),
-    radial-gradient(ellipse 60% 45% at 85% 85%, rgba(6, 182, 212, 0.08) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(14, 165, 233, 0.05) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 55% at 15% 10%, rgba(217, 119, 6, 0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 60% 45% at 85% 85%, rgba(20, 184, 166, 0.07) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(251, 191, 36, 0.04) 0%, transparent 60%);
 }
 
 /* Glass panel – base */
@@ -172,9 +172,9 @@
   pointer-events: none;
 }
 
-/* Gradient text – electric blue → near-white → cyan */
+/* Gradient text – amber → warm cream → teal */
 .gradient-text {
-  background: linear-gradient(135deg, #93c5fd 0%, #f0f9ff 50%, #67e8f9 100%);
+  background: linear-gradient(135deg, #fcd34d 0%, #fef9ef 50%, #5eead4 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -188,7 +188,7 @@
 }
 
 .glow {
-  box-shadow: 0 0 24px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.35);
 }
 
 .glow-green {
@@ -319,11 +319,11 @@
 
   0%,
   100% {
-    box-shadow: 0 0 20px rgba(14, 165, 233, 0.5);
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
   }
 
   50% {
-    box-shadow: 0 0 40px rgba(14, 165, 233, 0.8);
+    box-shadow: 0 0 40px rgba(245, 158, 11, 0.8);
   }
 }
 
@@ -381,12 +381,12 @@
 /* Gradient Border */
 .gradient-border {
   position: relative;
-  background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, #d97706 0%, #0d9488 100%);
   padding: 2px;
   border-radius: 1rem;
 }
 
 .gradient-border>* {
-  background: #070c14;
+  background: #0e0a04;
   border-radius: calc(1rem - 2px);
 }

@@ -233,7 +233,7 @@ function BrowsePageContent() {
                       className={cn(
                         "w-full flex items-center gap-2 px-3 py-2 rounded-md text-left transition-colors",
                         filters.minRating === rating
-                          ? "bg-blue-500/15 border border-blue-400/20 text-blue-300"
+                          ? "bg-amber-500/15 border border-amber-400/20 text-amber-300"
                           : "hover:bg-white/[0.06] text-white/70 hover:text-white"
                       )}
                     >

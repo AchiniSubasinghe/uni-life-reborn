@@ -57,14 +57,14 @@ export default function AdminLayout({
     <div className="min-h-screen site-bg">
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 h-14 flex items-center px-4"
-        style={{ background: 'rgba(7,12,20,0.88)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'rgba(14,10,4,0.88)', backdropFilter: 'blur(24px)', borderBottom: '1px solid rgba(255,255,255,0.07)' }}
       >
         <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(true)} className="text-white/60 hover:text-white">
           <Menu className="h-5 w-5" />
         </Button>
         <div className="flex-1 flex justify-center">
           <Link href="/admin/dashboard" className="flex items-center gap-2">
-            <Shield className="h-4 w-4 text-blue-300" />
+            <Shield className="h-4 w-4 text-amber-300" />
             <span className="font-semibold text-white text-sm">Admin</span>
           </Link>
         </div>
@@ -73,7 +73,7 @@ export default function AdminLayout({
       {sidebarOpen && (
         <div
           className="lg:hidden fixed inset-0 z-50"
-          style={{ backgroundColor: 'rgba(7,12,20,0.72)', backdropFilter: 'blur(4px)' }}
+          style={{ backgroundColor: 'rgba(14,10,4,0.72)', backdropFilter: 'blur(4px)' }}
           onClick={() => setSidebarOpen(false)}
         />
       )}
@@ -84,12 +84,12 @@ export default function AdminLayout({
           "fixed top-0 left-0 z-50 h-full w-64 transform transition-transform duration-200 ease-in-out lg:translate-x-0 flex flex-col",
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
-        style={{ background: 'rgba(5,9,16,0.92)', backdropFilter: 'blur(32px)', borderRight: '1px solid rgba(255,255,255,0.07)' }}
+        style={{ background: 'rgba(12,8,3,0.92)', backdropFilter: 'blur(32px)', borderRight: '1px solid rgba(255,255,255,0.07)' }}
       >
           {/* Logo */}
           <div className="h-14 flex items-center justify-between px-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <Link href="/admin/dashboard" className="flex items-center gap-2">
-              <Shield className="h-4 w-4 text-blue-300" />
+              <Shield className="h-4 w-4 text-amber-300" />
               <span className="font-semibold text-white text-sm">Admin Panel</span>
             </Link>
             <Button variant="ghost" size="icon" className="lg:hidden text-white/50 hover:text-white" onClick={() => setSidebarOpen(false)}>
@@ -100,14 +100,14 @@ export default function AdminLayout({
           {/* User Info */}
           <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-full bg-blue-500/20 border border-blue-400/20 flex items-center justify-center flex-shrink-0">
-                <Shield className="h-4 w-4 text-blue-300" />
+              <div className="h-9 w-9 rounded-full bg-amber-500/20 border border-amber-400/20 flex items-center justify-center flex-shrink-0">
+                <Shield className="h-4 w-4 text-amber-300" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-white text-sm">
                   {(userData as any)?.fullName || "Administrator"}
                 </p>
-                <span className="inline-flex items-center rounded-full bg-blue-500/15 border border-blue-400/20 px-2 py-0.5 text-xs text-blue-300">
+                <span className="inline-flex items-center rounded-full bg-amber-500/15 border border-amber-400/20 px-2 py-0.5 text-xs text-amber-300">
                   Admin
                 </span>
               </div>

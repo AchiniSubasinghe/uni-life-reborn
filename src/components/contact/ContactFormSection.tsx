@@ -63,7 +63,7 @@ export default function ContactFormSection() {
                       value={formData.name}
                       onChange={handleChange}
                       required
-                      className="pl-10 bg-card border-border text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                      className="pl-10 bg-card border-border text-white placeholder:text-gray-500 focus:border-amber-500 focus:ring-amber-500"
                     />
                   </div>
                 </div>
@@ -82,7 +82,7 @@ export default function ContactFormSection() {
                       value={formData.email}
                       onChange={handleChange}
                       required
-                      className="pl-10 bg-card border-border text-white placeholder:text-gray-500 focus:border-blue-500 focus:ring-blue-500"
+                      className="pl-10 bg-card border-border text-white placeholder:text-gray-500 focus:border-amber-500 focus:ring-amber-500"
                     />
                   </div>
                 </div>
@@ -99,7 +99,7 @@ export default function ContactFormSection() {
                   value={formData.subject}
                   onChange={handleChange}
                   required
-                  className="w-full h-10 px-3 bg-card border border-border text-white rounded-md focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                  className="w-full h-10 px-3 bg-card border border-border text-white rounded-md focus:border-amber-500 focus:ring-amber-500 focus:outline-none"
                 >
                   <option value="">Select a subject</option>
                   <option value="general">General Inquiry</option>
@@ -126,7 +126,7 @@ export default function ContactFormSection() {
                     onChange={handleChange}
                     required
                     rows={6}
-                    className="w-full pl-10 py-2 bg-card border border-border text-white placeholder:text-gray-500 rounded-md focus:border-blue-500 focus:ring-blue-500 focus:outline-none resize-none"
+                    className="w-full pl-10 py-2 bg-card border border-border text-white placeholder:text-gray-500 rounded-md focus:border-amber-500 focus:ring-amber-500 focus:outline-none resize-none"
                   />
                 </div>
               </div>
