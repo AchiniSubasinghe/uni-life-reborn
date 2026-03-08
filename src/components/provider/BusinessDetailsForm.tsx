@@ -1,3 +1,3 @@
 export default function BusinessDetailsForm() {
-  return null;
+    return null;
 }

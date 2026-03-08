@@ -14,8 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "UniLife",
-  description: "Uni-life is a web application designed to help university students manage their academic and social lives more effectively.",
+  title: "UniLife — Campus Services for Sri Lankan Universities",
+  description:
+    "UniLife helps university students in Sri Lanka discover verified hostels, restaurants, pharmacies, and everyday services near campus — all in one free platform.",
 };
 
 export default function RootLayout({
