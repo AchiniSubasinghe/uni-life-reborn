@@ -10,11 +10,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { 
-  User, 
-  Lock, 
-  Bell, 
-  Loader2, 
+import {
+  User,
+  Lock,
+  Bell,
+  Loader2,
   Save,
   CheckCircle,
   AlertCircle
@@ -35,7 +35,7 @@ export default function StudentSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
-  
+
   const [profile, setProfile] = useState<StudentProfile>({
     firstName: "",
     lastName: "",
@@ -44,7 +44,7 @@ export default function StudentSettingsPage() {
     university: "",
     studentId: "",
   });
-  
+
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -61,17 +61,17 @@ export default function StudentSettingsPage() {
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) return;
-      
+
       try {
         // Try students collection first, then users collection
         let docRef = doc(db, "students", user.uid);
         let docSnap = await getDoc(docRef);
-        
+
         if (!docSnap.exists()) {
           docRef = doc(db, "users", user.uid);
           docSnap = await getDoc(docRef);
         }
-        
+
         if (docSnap.exists()) {
           const data = docSnap.data();
           setProfile({
@@ -82,7 +82,7 @@ export default function StudentSettingsPage() {
             university: data.university || "",
             studentId: data.studentId || "",
           });
-          
+
           if (data.notifications) {
             setNotifications(data.notifications);
           }
@@ -99,10 +99,10 @@ export default function StudentSettingsPage() {
 
   const handleSaveProfile = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     setMessage(null);
-    
+
     try {
       // Update Firestore
       const docRef = doc(db, "students", user.uid);
@@ -114,14 +114,14 @@ export default function StudentSettingsPage() {
         studentId: profile.studentId,
         updatedAt: new Date(),
       });
-      
+
       // Update Firebase Auth profile
       if (auth.currentUser) {
         await updateProfile(auth.currentUser, {
           displayName: `${profile.firstName} ${profile.lastName}`,
         });
       }
-      
+
       setMessage({ type: "success", text: "Profile updated successfully!" });
     } catch (error) {
       console.error("Error saving profile:", error);
@@ -133,20 +133,20 @@ export default function StudentSettingsPage() {
 
   const handleChangePassword = async () => {
     if (!user || !auth.currentUser) return;
-    
+
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       setMessage({ type: "error", text: "New passwords do not match." });
       return;
     }
-    
+
     if (passwordData.newPassword.length < 6) {
       setMessage({ type: "error", text: "Password must be at least 6 characters." });
       return;
     }
-    
+
     setChangingPassword(true);
     setMessage(null);
-    
+
     try {
       // Re-authenticate user
       const credential = EmailAuthProvider.credential(
@@ -154,10 +154,10 @@ export default function StudentSettingsPage() {
         passwordData.currentPassword
       );
       await reauthenticateWithCredential(auth.currentUser, credential);
-      
+
       // Update password
       await updatePassword(auth.currentUser, passwordData.newPassword);
-      
+
       setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setMessage({ type: "success", text: "Password changed successfully!" });
     } catch (error: unknown) {
@@ -174,17 +174,17 @@ export default function StudentSettingsPage() {
 
   const handleSaveNotifications = async () => {
     if (!user) return;
-    
+
     setSaving(true);
     setMessage(null);
-    
+
     try {
       const docRef = doc(db, "students", user.uid);
       await updateDoc(docRef, {
         notifications,
         updatedAt: new Date(),
       });
-      
+
       setMessage({ type: "success", text: "Notification preferences saved!" });
     } catch (error) {
       console.error("Error saving notifications:", error);
@@ -203,7 +203,7 @@ export default function StudentSettingsPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-2xl">
+    <div className="space-y-6 max-w-4xl">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
@@ -214,161 +214,144 @@ export default function StudentSettingsPage() {
 
       {/* Message */}
       {message && (
-        <div className={`flex items-center gap-2 p-4 rounded-lg ${
-          message.type === "success" 
-            ? "bg-emerald-500/10 text-emerald-300 border border-emerald-400/20" 
+        <div className={`flex items-center gap-2 p-4 rounded-xl ${message.type === "success"
+            ? "bg-emerald-500/10 text-emerald-300 border border-emerald-400/20"
             : "bg-red-500/10 text-red-300 border border-red-400/20"
-        }`}>
+          }`}>
           {message.type === "success" ? (
-            <CheckCircle className="h-5 w-5" />
+            <CheckCircle className="h-5 w-5 shrink-0" />
           ) : (
-            <AlertCircle className="h-5 w-5" />
+            <AlertCircle className="h-5 w-5 shrink-0" />
           )}
           {message.text}
         </div>
       )}
 
-      {/* Profile Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5" />
-            Profile Information
-          </CardTitle>
-          <CardDescription>
-            Update your personal information
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="firstName">First Name</Label>
-              <Input
-                id="firstName"
-                value={profile.firstName}
-                onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
-              />
+      {/* Profile + Password — 2 col on lg */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Profile Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Profile Information
+            </CardTitle>
+            <CardDescription>Update your personal information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input
+                  id="firstName"
+                  value={profile.firstName}
+                  onChange={(e) => setProfile({ ...profile, firstName: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  value={profile.lastName}
+                  onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="lastName">Last Name</Label>
-              <Input
-                id="lastName"
-                value={profile.lastName}
-                onChange={(e) => setProfile({ ...profile, lastName: e.target.value })}
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={profile.email}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed
-            </p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={profile.phone}
-              onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-              placeholder="+94 71 234 5678"
-            />
-          </div>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="university">University</Label>
-              <Input
-                id="university"
-                value={profile.university}
-                onChange={(e) => setProfile({ ...profile, university: e.target.value })}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="studentId">Student ID</Label>
-              <Input
-                id="studentId"
-                value={profile.studentId}
-                onChange={(e) => setProfile({ ...profile, studentId: e.target.value })}
-              />
-            </div>
-          </div>
-          
-          <Button onClick={handleSaveProfile} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
-            Save Changes
-          </Button>
-        </CardContent>
-      </Card>
 
-      {/* Password Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lock className="h-5 w-5" />
-            Change Password
-          </CardTitle>
-          <CardDescription>
-            Update your password to keep your account secure
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input
-              id="currentPassword"
-              type="password"
-              value={passwordData.currentPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="newPassword">New Password</Label>
-            <Input
-              id="newPassword"
-              type="password"
-              value={passwordData.newPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm New Password</Label>
-            <Input
-              id="confirmPassword"
-              type="password"
-              value={passwordData.confirmPassword}
-              onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-            />
-          </div>
-          
-          <Button 
-            onClick={handleChangePassword} 
-            disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword}
-          >
-            {changingPassword ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Lock className="h-4 w-4 mr-2" />
-            )}
-            Change Password
-          </Button>
-        </CardContent>
-      </Card>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={profile.email} disabled className="opacity-50 cursor-not-allowed" />
+              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={profile.phone}
+                onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                placeholder="+94 71 234 5678"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="university">University</Label>
+                <Input
+                  id="university"
+                  value={profile.university}
+                  onChange={(e) => setProfile({ ...profile, university: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="studentId">Student ID</Label>
+                <Input
+                  id="studentId"
+                  value={profile.studentId}
+                  onChange={(e) => setProfile({ ...profile, studentId: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+              {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
+              Save Changes
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Password Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lock className="h-5 w-5" />
+              Change Password
+            </CardTitle>
+            <CardDescription>Update your password to keep your account secure</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="currentPassword">Current Password</Label>
+              <Input
+                id="currentPassword"
+                type="password"
+                value={passwordData.currentPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="newPassword">New Password</Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={passwordData.newPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm New Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                value={passwordData.confirmPassword}
+                onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+              />
+            </div>
+
+            <Button
+              onClick={handleChangePassword}
+              disabled={changingPassword || !passwordData.currentPassword || !passwordData.newPassword}
+              className="w-full"
+            >
+              {changingPassword ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Lock className="h-4 w-4 mr-2" />}
+              Change Password
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Notifications Section */}
       <Card>
@@ -377,47 +360,42 @@ export default function StudentSettingsPage() {
             <Bell className="h-5 w-5" />
             Notifications
           </CardTitle>
-          <CardDescription>
-            Manage your notification preferences
-          </CardDescription>
+          <CardDescription>Manage your notification preferences</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-4">
+        <CardContent className="space-y-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { key: "emailNotifications", label: "Email Notifications", description: "Receive notifications via email" },
-              { key: "newBusinesses", label: "New Businesses", description: "Get notified when new businesses are added" },
-              { key: "reviewResponses", label: "Review Responses", description: "Get notified when providers respond to your reviews" },
+              { key: "newBusinesses", label: "New Businesses", description: "Notified when new businesses are added" },
+              { key: "reviewResponses", label: "Review Responses", description: "Notified when providers respond to reviews" },
               { key: "weeklyDigest", label: "Weekly Digest", description: "Receive a weekly summary of new services" },
             ].map((item) => (
-              <div key={item.key} className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">{item.label}</p>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
+              <div key={item.key} className="flex items-center justify-between gap-4 rounded-xl p-4"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div className="min-w-0">
+                  <p className="font-medium text-sm text-white">{item.label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{item.description}</p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={notifications[item.key as keyof typeof notifications]}
-                    onChange={(e) => setNotifications({ 
-                      ...notifications, 
-                      [item.key]: e.target.checked 
-                    })}
-                    className="sr-only peer"
-                  />
-                  <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                </label>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={notifications[item.key as keyof typeof notifications]}
+                  onClick={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key as keyof typeof notifications] })}
+                  className={`relative shrink-0 inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus-visible:outline-none ${notifications[item.key as keyof typeof notifications]
+                      ? 'bg-amber-500'
+                      : 'bg-white/15'
+                    }`}
+                >
+                  <span className={`block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200 ${notifications[item.key as keyof typeof notifications] ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                </button>
               </div>
             ))}
           </div>
-          
-          <Separator />
-          
+
           <Button onClick={handleSaveNotifications} disabled={saving}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4 mr-2" />
-            )}
+            {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
             Save Preferences
           </Button>
         </CardContent>
