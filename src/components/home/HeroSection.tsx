@@ -51,7 +51,6 @@ export default function HeroSection() {
           className="glass glass-sheen rounded-full px-5 py-2 mb-8 flex items-center gap-2 text-sm text-white/70"
         >
           <Sparkles className="w-4 h-4 text-amber-300" />
-          <span>Solving a real campus problem &middot; Sri Lankan universities</span>
         </motion.div>
 
         {/* Headline */}
