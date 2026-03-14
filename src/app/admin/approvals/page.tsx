@@ -11,13 +11,20 @@ import {
   Mail,
   Star,
   Clock,
-  ExternalLink,
+  Ban,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/auth-context";
-import { getPendingBusinesses, updateBusinessStatus, getBusinessById } from "@/lib/services/business-service";
+import {
+  blockBusiness,
+  deleteBusiness,
+  getBusinessesForApprovals,
+  updateBusinessStatus,
+} from "@/lib/services/business-service";
+import { toggleUserActive } from "@/lib/services/user-service";
 import { Business } from "@/types";
 import { getCategoryName } from "@/lib/services/category-service";
 import { formatDate } from "@/lib/date-utils";
@@ -28,19 +35,20 @@ export default function AdminApprovalsPage() {
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved">("all");
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    loadPendingBusinesses();
+    loadBusinesses();
   }, []);
 
-  async function loadPendingBusinesses() {
+  async function loadBusinesses() {
     try {
-      const data = await getPendingBusinesses();
+      const data = await getBusinessesForApprovals();
       setBusinesses(data);
     } catch (error) {
-      console.error("Error loading pending businesses:", error);
+      console.error("Error loading businesses:", error);
     } finally {
       setLoading(false);
     }
@@ -52,7 +60,7 @@ export default function AdminApprovalsPage() {
 
     try {
       await updateBusinessStatus(business.id, "approved", userData.uid);
-      setBusinesses((prev) => prev.filter((b) => b.id !== business.id));
+      await loadBusinesses();
       setSelectedBusiness(null);
     } catch (error) {
       console.error("Error approving business:", error);
@@ -72,7 +80,7 @@ export default function AdminApprovalsPage() {
         userData.uid,
         rejectionReason || "Does not meet our guidelines"
       );
-      setBusinesses((prev) => prev.filter((b) => b.id !== selectedBusiness.id));
+      await loadBusinesses();
       setSelectedBusiness(null);
       setShowRejectModal(false);
       setRejectionReason("");
@@ -83,9 +91,68 @@ export default function AdminApprovalsPage() {
     }
   };
 
+  const handleDeleteBusiness = async (business: Business) => {
+    if (!confirm(`Delete business "${business.name}"? This cannot be undone.`)) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await deleteBusiness(business.id);
+      await loadBusinesses();
+      if (selectedBusiness?.id === business.id) {
+        setSelectedBusiness(null);
+      }
+    } catch (error) {
+      console.error("Error deleting business:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBlockBusiness = async (business: Business) => {
+    if (!userData?.uid) return;
+    if (!confirm(`Block business "${business.name}"?`)) return;
+
+    setActionLoading(true);
+    try {
+      await blockBusiness(business.id, userData.uid, "Blocked by admin");
+      await loadBusinesses();
+      if (selectedBusiness?.id === business.id) {
+        setSelectedBusiness({ ...business, status: "rejected", isBlocked: true });
+      }
+    } catch (error) {
+      console.error("Error blocking business:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleBlockProvider = async (business: Business) => {
+    if (!confirm(`Block provider account for "${business.providerName}"?`)) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      await toggleUserActive(business.providerId, false);
+      await blockBusiness(business.id, userData!.uid, "Provider blocked by admin");
+      await loadBusinesses();
+    } catch (error) {
+      console.error("Error blocking provider:", error);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const viewDetails = async (business: Business) => {
     setSelectedBusiness(business);
   };
+
+  const filteredBusinesses = businesses.filter((business) => {
+    if (statusFilter === "all") return true;
+    return business.status === statusFilter;
+  });
 
   if (loading) {
     return (
@@ -112,23 +179,36 @@ export default function AdminApprovalsPage() {
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Pending List */}
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">
-            Pending ({businesses.length})
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Businesses ({filteredBusinesses.length})</h2>
+            <div className="flex gap-2">
+              {(["all", "pending", "approved"] as const).map((filter) => (
+                <Button
+                  key={filter}
+                  size="sm"
+                  variant={statusFilter === filter ? "default" : "outline"}
+                  onClick={() => setStatusFilter(filter)}
+                  className="capitalize"
+                >
+                  {filter}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-          {businesses.length === 0 ? (
+          {filteredBusinesses.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <CheckCircle className="h-12 w-12 mx-auto text-green-500 mb-3" />
                 <p className="text-lg font-medium">All caught up!</p>
                 <p className="text-muted-foreground">
-                  No pending approvals at the moment.
+                  No businesses found for this filter.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-3">
-              {businesses.map((business) => (
+              {filteredBusinesses.map((business) => (
                 <Card
                   key={business.id}
                   className={`cursor-pointer transition-all hover:border-primary/50 ${
@@ -154,6 +234,9 @@ export default function AdminApprovalsPage() {
                         <p className="text-sm text-muted-foreground">
                           {getCategoryName(business.category)}
                         </p>
+                        <p className="text-xs text-muted-foreground mt-1 capitalize">
+                          Status: {business.isBlocked ? "blocked" : business.status}
+                        </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           by {business.providerName}
                         </p>
@@ -177,9 +260,19 @@ export default function AdminApprovalsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>{selectedBusiness.name}</span>
-                  <span className="inline-flex items-center rounded-full bg-amber-500/15 border border-amber-400/20 px-2.5 py-0.5 text-xs font-medium text-amber-300">
-                    Pending Review
-                  </span>
+                    {selectedBusiness.isBlocked ? (
+                      <span className="inline-flex items-center rounded-full bg-red-500/15 border border-red-400/20 px-2.5 py-0.5 text-xs font-medium text-red-300">
+                        Blocked
+                      </span>
+                    ) : selectedBusiness.status === "approved" ? (
+                      <span className="inline-flex items-center rounded-full bg-green-500/15 border border-green-400/20 px-2.5 py-0.5 text-xs font-medium text-green-300">
+                        Approved
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center rounded-full bg-amber-500/15 border border-amber-400/20 px-2.5 py-0.5 text-xs font-medium text-amber-300">
+                        Pending Review
+                      </span>
+                    )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -244,23 +337,56 @@ export default function AdminApprovalsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-3 pt-4 border-t">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-4 border-t">
+                  {selectedBusiness.status === "pending" && !selectedBusiness.isBlocked && (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => setShowRejectModal(true)}
+                        disabled={actionLoading}
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Reject
+                      </Button>
+                      <Button
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => handleApprove(selectedBusiness)}
+                        disabled={actionLoading}
+                      >
+                        <CheckCircle className="h-4 w-4 mr-2" />
+                        {actionLoading ? "Processing..." : "Approve"}
+                      </Button>
+                    </>
+                  )}
+
                   <Button
                     variant="outline"
-                    className="flex-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                    onClick={() => setShowRejectModal(true)}
-                    disabled={actionLoading}
+                    onClick={() => handleBlockBusiness(selectedBusiness)}
+                    disabled={actionLoading || selectedBusiness.isBlocked}
                   >
-                    <XCircle className="h-4 w-4 mr-2" />
-                    Reject
+                    <Ban className="h-4 w-4 mr-2" />
+                    {selectedBusiness.isBlocked ? "Business Blocked" : "Block Business"}
                   </Button>
+
                   <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={() => handleApprove(selectedBusiness)}
+                    variant="outline"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleDeleteBusiness(selectedBusiness)}
                     disabled={actionLoading}
                   >
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    {actionLoading ? "Processing..." : "Approve"}
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete Business
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                    onClick={() => handleBlockProvider(selectedBusiness)}
+                    disabled={actionLoading}
+                  >
+                    <Ban className="h-4 w-4 mr-2" />
+                    Block Provider
                   </Button>
                 </div>
               </CardContent>
