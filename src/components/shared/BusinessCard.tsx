@@ -3,7 +3,7 @@
 import { Star, MapPin, Heart } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Business, BusinessCategory } from "@/types";
@@ -34,6 +34,10 @@ export function BusinessCard({
 }: BusinessCardProps) {
   const [favorited, setFavorited] = useState(isFavorited);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setFavorited(isFavorited);
+  }, [isFavorited]);
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault();
