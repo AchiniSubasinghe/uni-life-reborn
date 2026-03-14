@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { collection, query, where, getDocs, orderBy, deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/config/firebase.config";
-import { getBusinessById } from "@/lib/services/business-service";
-import { Review, Business } from "@/types";
+import { deleteReviewByActor, getReviewsByUser, updateReview } from "@/lib/services/review-service";
+import { Review } from "@/types";
 import { StarRating } from "@/components/shared/StarRating";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +12,9 @@ import {
   Loader2, 
   Star, 
   Trash2, 
+  Edit,
+  X,
+  Check,
   ExternalLink,
   Calendar,
   AlertCircle
@@ -21,37 +22,22 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
-interface ReviewWithBusiness extends Review {
-  business?: Business;
-}
-
 export default function StudentReviewsPage() {
   const { user } = useAuth();
-  const [reviews, setReviews] = useState<ReviewWithBusiness[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState<1 | 2 | 3 | 4 | 5>(5);
+  const [editComment, setEditComment] = useState("");
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchMyReviews = async () => {
       if (!user) return;
       
       try {
-        const reviewsRef = collection(db, "reviews");
-        const q = query(
-          reviewsRef,
-          where("userId", "==", user.uid),
-          orderBy("createdAt", "desc")
-        );
-        
-        const snapshot = await getDocs(q);
-        const reviewsData: ReviewWithBusiness[] = [];
-        
-        for (const docSnap of snapshot.docs) {
-          const review = { id: docSnap.id, ...docSnap.data() } as Review;
-          const business = await getBusinessById(review.businessId);
-          reviewsData.push({ ...review, business: business || undefined });
-        }
-        
+        const reviewsData = await getReviewsByUser(user.uid);
         setReviews(reviewsData);
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -68,12 +54,53 @@ export default function StudentReviewsPage() {
     
     setDeletingId(reviewId);
     try {
-      await deleteDoc(doc(db, "reviews", reviewId));
+      await deleteReviewByActor(reviewId, user!.uid, "student");
       setReviews(prev => prev.filter(r => r.id !== reviewId));
     } catch (error) {
       console.error("Error deleting review:", error);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const startEdit = (review: Review) => {
+    setEditingId(review.id);
+    setEditRating(review.rating);
+    setEditComment(review.comment);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditComment("");
+  };
+
+  const handleUpdateReview = async (reviewId: string) => {
+    if (!editComment.trim()) return;
+
+    setUpdatingId(reviewId);
+    try {
+      await updateReview(reviewId, {
+        rating: editRating,
+        comment: editComment.trim(),
+      });
+
+      setReviews((prev) =>
+        prev.map((review) =>
+          review.id === reviewId
+            ? {
+                ...review,
+                rating: editRating,
+                comment: editComment.trim(),
+              }
+            : review
+        )
+      );
+
+      cancelEdit();
+    } catch (error) {
+      console.error("Error updating review:", error);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -188,12 +215,12 @@ export default function StudentReviewsPage() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        {review.business ? (
+                        {review.businessId ? (
                           <Link 
                             href={`/business/${review.businessId}`}
                             className="font-semibold text-lg hover:text-primary transition-colors flex items-center gap-2"
                           >
-                            {review.business.name}
+                            {review.businessName}
                             <ExternalLink className="h-4 w-4" />
                           </Link>
                         ) : (
@@ -213,7 +240,36 @@ export default function StudentReviewsPage() {
                       <StarRating rating={review.rating} size="sm" />
                     </div>
 
-                    <p className="text-muted-foreground mb-4">{review.comment}</p>
+                    {editingId === review.id ? (
+                      <div className="mb-4 space-y-3">
+                        <StarRating
+                          rating={editRating}
+                          onRatingChange={(rating) => setEditRating(rating as 1 | 2 | 3 | 4 | 5)}
+                          size="sm"
+                        />
+                        <textarea
+                          className="w-full min-h-24 p-3 border rounded-md bg-background"
+                          value={editComment}
+                          onChange={(e) => setEditComment(e.target.value)}
+                        />
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => handleUpdateReview(review.id)}
+                            disabled={updatingId === review.id || !editComment.trim()}
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            {updatingId === review.id ? "Saving..." : "Save"}
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={cancelEdit}>
+                            <X className="h-4 w-4 mr-1" />
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground mb-4">{review.comment}</p>
+                    )}
 
                     {/* Provider Response */}
                     {review.providerResponse && (
@@ -243,6 +299,15 @@ export default function StudentReviewsPage() {
 
                   {/* Actions */}
                   <div className="flex md:flex-col gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => startEdit(review)}
+                      disabled={editingId === review.id || deletingId === review.id}
+                    >
+                      <Edit className="h-4 w-4 mr-1" />
+                      Edit
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"
