@@ -44,6 +44,7 @@ export async function createBusiness(
     images: imageUrls,
     coverImage: imageUrls[0] || "",
     status: "pending" as BusinessStatus,
+    isBlocked: false,
     averageRating: 0,
     totalReviews: 0,
     searchKeywords,
@@ -114,7 +115,9 @@ export async function getApprovedBusinesses(
   }
 
   const snapshot = await getDocs(q);
-  const businesses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Business));
+  const businesses = snapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() } as Business))
+    .filter((business) => !business.isBlocked);
   const newLastDoc = snapshot.docs[snapshot.docs.length - 1] || null;
 
   return { businesses, lastDoc: newLastDoc };
@@ -141,7 +144,9 @@ export async function getBusinessesByCategory(category: BusinessCategory): Promi
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Business));
+  return snapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() } as Business))
+    .filter((business) => !business.isBlocked);
 }
 
 export async function getPendingBusinesses(): Promise<Business[]> {
@@ -155,7 +160,21 @@ export async function getPendingBusinesses(): Promise<Business[]> {
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Business));
 }
 
-export async function searchBusinesses(searchQuery: string): Promise<Business[]> {
+export async function getBusinessesForApprovals(): Promise<Business[]> {
+  const q = query(
+    collection(db, BUSINESSES_COLLECTION),
+    where("status", "in", ["pending", "approved"]),
+    orderBy("createdAt", "desc")
+  );
+
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Business));
+}
+
+export async function searchBusinesses(
+  searchQuery: string,
+  filters?: Pick<SearchFilters, "category" | "minRating" | "priceRange">
+): Promise<Business[]> {
   // Convert search query to lowercase for matching
   const searchTerms = searchQuery.toLowerCase().split(" ");
   
@@ -167,7 +186,23 @@ export async function searchBusinesses(searchQuery: string): Promise<Business[]>
   );
   
   const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Business));
+  let businesses = snapshot.docs
+    .map(doc => ({ id: doc.id, ...doc.data() } as Business))
+    .filter((business) => !business.isBlocked);
+
+  if (filters?.category) {
+    businesses = businesses.filter((business) => business.category === filters.category);
+  }
+
+  if (filters?.minRating) {
+    businesses = businesses.filter((business) => business.averageRating >= filters.minRating!);
+  }
+
+  if (filters?.priceRange?.length) {
+    businesses = businesses.filter((business) => filters.priceRange!.includes(business.priceRange));
+  }
+
+  return businesses;
 }
 
 // ============================================
@@ -203,6 +238,10 @@ export async function getNearbyBusinesses(
   
   // Filter by actual distance
   return businesses.filter(business => {
+    if (business.isBlocked) {
+      return false;
+    }
+
     const lat = business.location.latitude;
     const lon = business.location.longitude;
     
@@ -240,7 +279,7 @@ export async function updateBusiness(
     updatedAt: serverTimestamp(),
   };
   
-  if (data.latitude && data.longitude) {
+  if (data.latitude !== undefined && data.longitude !== undefined) {
     updateData.location = new GeoPoint(data.latitude, data.longitude);
     delete updateData.latitude;
     delete updateData.longitude;
@@ -273,6 +312,7 @@ export async function updateBusinessStatus(
 ): Promise<void> {
   const updateData: any = {
     status,
+    isBlocked: false,
     updatedAt: serverTimestamp(),
   };
   
@@ -294,6 +334,30 @@ export async function updateBusinessRating(
   await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), {
     averageRating: newRating,
     totalReviews,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function blockBusiness(
+  businessId: string,
+  adminId: string,
+  reason?: string
+): Promise<void> {
+  await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), {
+    isBlocked: true,
+    blockedAt: serverTimestamp(),
+    blockedBy: adminId,
+    status: "rejected",
+    rejectionReason: reason || "Blocked by admin",
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function unblockBusiness(businessId: string): Promise<void> {
+  await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), {
+    isBlocked: false,
+    blockedAt: null,
+    blockedBy: null,
     updatedAt: serverTimestamp(),
   });
 }
