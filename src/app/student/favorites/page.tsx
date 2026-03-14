@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useAuth } from "@/context/auth-context";
 import { getFavoritesByUser, removeFavorite } from "@/lib/services/favorites-service";
 import { getBusinessById } from "@/lib/services/business-service";
@@ -29,12 +30,14 @@ export default function FavoritesPage() {
         const favoritesWithBusinesses = await Promise.all(
           userFavorites.map(async (fav) => {
             const business = await getBusinessById(fav.businessId);
-            return { ...fav, business: business! };
+            return business ? { ...fav, business } : null;
           })
         );
         
         // Filter out any favorites where business no longer exists
-        const validFavorites = favoritesWithBusinesses.filter(f => f.business);
+        const validFavorites = favoritesWithBusinesses.filter(
+          (favorite): favorite is Favorite & { business: Business } => !!favorite?.business
+        );
         setFavorites(validFavorites);
         setFilteredFavorites(validFavorites);
       } catch (error) {
@@ -152,7 +155,7 @@ export default function FavoritesPage() {
           </p>
           {favorites.length === 0 && (
             <Button className="mt-4" asChild>
-              <a href="/browse">Browse Services</a>
+              <Link href="/student/browse">Browse Services</Link>
             </Button>
           )}
         </div>
