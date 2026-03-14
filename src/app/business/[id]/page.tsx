@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
 import {
   MapPin,
   Phone,
@@ -21,10 +21,11 @@ import { ReviewCard } from "@/components/shared/ReviewCard";
 import { StarRating } from "@/components/shared/StarRating";
 import { useAuth } from "@/context/auth-context";
 import { getBusinessById } from "@/lib/services/business-service";
-import { getReviewsForBusiness, createReview, reportReview } from "@/lib/services/review-service";
+import { getReviewsForBusiness, createReview, reportReview, deleteReviewByActor } from "@/lib/services/review-service";
 import { toggleFavorite, isFavorited } from "@/lib/services/favorites-service";
+import { getBusinessPosts } from "@/lib/services/business-post-service";
 import { getCategoryName } from "@/lib/services/category-service";
-import { Business, Review, ReviewFormData } from "@/types";
+import { Business, BusinessPost, Review, ReviewFormData } from "@/types";
 import { formatTime } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
@@ -37,11 +38,13 @@ const PRICE_LABELS: Record<number, string> = {
 
 export default function BusinessDetailsPage() {
   const params = useParams();
+  const pathname = usePathname();
   const { user, userData, role } = useAuth();
   const businessId = params.id as string;
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [posts, setPosts] = useState<BusinessPost[]>([]);
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showReviewForm, setShowReviewForm] = useState(false);
@@ -50,6 +53,7 @@ export default function BusinessDetailsPage() {
     comment: "",
   });
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
@@ -64,12 +68,14 @@ export default function BusinessDetailsPage() {
 
   async function loadBusinessDetails() {
     try {
-      const [businessData, reviewsData] = await Promise.all([
+      const [businessData, reviewsData, postsData] = await Promise.all([
         getBusinessById(businessId),
         getReviewsForBusiness(businessId),
+        getBusinessPosts(businessId),
       ]);
       setBusiness(businessData);
       setReviews(reviewsData);
+      setPosts(postsData);
     } catch (error) {
       console.error("Error loading business details:", error);
     } finally {
@@ -99,7 +105,9 @@ export default function BusinessDetailsPage() {
 
   const handleSubmitReview = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user?.uid || !userData || !business) return;
+    if (!user?.uid || !business) return;
+
+    const effectiveRole = role === "admin" || role === "provider" ? role : "student";
 
     setSubmittingReview(true);
     try {
@@ -107,8 +115,9 @@ export default function BusinessDetailsPage() {
         businessId,
         business.name,
         user.uid,
-        (userData as any).fullName || "Anonymous",
-        reviewData
+        (userData as any)?.fullName || user.displayName || "Anonymous",
+        reviewData,
+        effectiveRole
       );
       
       // Reload reviews
@@ -136,6 +145,26 @@ export default function BusinessDetailsPage() {
     );
   };
 
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!user?.uid || !role) return;
+    if (!confirm("Delete this review?")) return;
+
+    setDeletingReviewId(reviewId);
+    try {
+      await deleteReviewByActor(reviewId, user.uid, role);
+      const [updatedReviews, updatedBusiness] = await Promise.all([
+        getReviewsForBusiness(businessId),
+        getBusinessById(businessId),
+      ]);
+      setReviews(updatedReviews);
+      setBusiness(updatedBusiness);
+    } catch (error) {
+      console.error("Error deleting review:", error);
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -155,7 +184,7 @@ export default function BusinessDetailsPage() {
         <p className="text-muted-foreground mt-2">
           The business you're looking for doesn't exist or has been removed.
         </p>
-        <Link href="/browse">
+        <Link href={pathname.startsWith("/student") ? "/student/browse" : "/browse"}>
           <Button className="mt-4">Browse Services</Button>
         </Link>
       </div>
@@ -163,13 +192,15 @@ export default function BusinessDetailsPage() {
   }
 
   const userHasReviewed = reviews.some((r) => r.userId === user?.uid);
+  const canReview = !!user?.uid && role !== "provider" && role !== "admin";
+  const backToBrowseHref = pathname.startsWith("/student") ? "/student/browse" : "/browse";
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="border-b bg-background/95 backdrop-blur sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/browse" className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
+          <Link href={backToBrowseHref} className="flex items-center gap-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="h-4 w-4" />
             Back to Browse
           </Link>
@@ -274,7 +305,7 @@ export default function BusinessDetailsPage() {
                 <h2 className="text-lg font-semibold">
                   Reviews ({reviews.length})
                 </h2>
-                {role === "student" && !userHasReviewed && (
+                {canReview && !userHasReviewed && (
                   <Button
                     onClick={() => setShowReviewForm(true)}
                     disabled={!user}
@@ -283,6 +314,12 @@ export default function BusinessDetailsPage() {
                   </Button>
                 )}
               </div>
+
+              {!user?.uid && (
+                <p className="text-sm text-muted-foreground mb-4">
+                  Please sign in as a student to write a review.
+                </p>
+              )}
 
               {/* Review Form */}
               {showReviewForm && (
@@ -345,12 +382,26 @@ export default function BusinessDetailsPage() {
               {reviews.length > 0 ? (
                 <div className="space-y-4">
                   {reviews.map((review) => (
-                    <ReviewCard
-                      key={review.id}
-                      review={review}
-                      onReport={handleReportReview}
-                      showReportButton={user?.uid !== review.userId}
-                    />
+                    <div key={review.id} className="space-y-2">
+                      <ReviewCard
+                        review={review}
+                        onReport={handleReportReview}
+                        showReportButton={user?.uid !== review.userId}
+                      />
+                      {user?.uid && role && (role === "admin" || role === "provider" || review.userId === user.uid) && (
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteReview(review.id)}
+                            disabled={deletingReviewId === review.id}
+                          >
+                            {deletingReviewId === review.id ? "Deleting..." : "Delete Review"}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -361,6 +412,43 @@ export default function BusinessDetailsPage() {
                     <p className="text-sm text-muted-foreground">
                       Be the first to review this business!
                     </p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {/* Provider Posts */}
+            <div>
+              <h2 className="text-lg font-semibold mb-4">Latest Updates</h2>
+              {posts.length > 0 ? (
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <Card key={post.id}>
+                      <CardContent className="pt-6 space-y-3">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <h3 className="font-semibold">{post.title}</h3>
+                            <p className="text-xs text-muted-foreground">
+                              by {post.providerName}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{post.content}</p>
+                        {post.imageUrl && (
+                          <img
+                            src={post.imageUrl}
+                            alt={post.title}
+                            className="rounded-lg max-h-56 w-full object-cover"
+                          />
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <Card>
+                  <CardContent className="py-8 text-center text-muted-foreground">
+                    No updates from this provider yet.
                   </CardContent>
                 </Card>
               )}
