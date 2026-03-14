@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { BusinessCard } from "@/components/shared/BusinessCard";
 import { CategoryCard } from "@/components/shared/CategoryCard";
-import { getApprovedBusinesses } from "@/lib/services/business-service";
+import { getApprovedBusinesses, getBusinessById } from "@/lib/services/business-service";
 import { getAllCategories } from "@/lib/services/category-service";
-import { getFavoritesByUser } from "@/lib/services/favorites-service";
+import { getFavoritesByUser, toggleFavorite } from "@/lib/services/favorites-service";
 import { Business, Category } from "@/types";
 
 export default function StudentDashboard() {
@@ -18,32 +18,93 @@ export default function StudentDashboard() {
   const [recentBusinesses, setRecentBusinesses] = useState<Business[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [favoriteCount, setFavoriteCount] = useState(0);
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [favoriteBusinesses, setFavoriteBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function loadDashboardData() {
+    let mounted = true;
+
+    async function loadDashboardData(showInitialLoader: boolean = false) {
+      if (showInitialLoader) {
+        setLoading(true);
+      }
+
       try {
-        const [businessesResult, categoriesData] = await Promise.all([
+        const [businessesResult, categoriesData, favoritesData] = await Promise.all([
           getApprovedBusinesses({}, undefined, 6),
           getAllCategories(),
+          userData?.uid ? getFavoritesByUser(userData.uid) : Promise.resolve([]),
         ]);
-        
+
+        if (!mounted) return;
+
         setRecentBusinesses(businessesResult.businesses);
         setCategories(categoriesData.slice(0, 8));
+        setFavoriteCount(favoritesData.length);
+        setFavoriteIds(new Set(favoritesData.map((fav) => fav.businessId)));
 
-        if (userData?.uid) {
-          const favorites = await getFavoritesByUser(userData.uid);
-          setFavoriteCount(favorites.length);
+        if (favoritesData.length > 0) {
+          const favoriteBusinessDocs = await Promise.all(
+            favoritesData.slice(0, 3).map((fav) => getBusinessById(fav.businessId))
+          );
+
+          if (!mounted) return;
+
+          setFavoriteBusinesses(
+            favoriteBusinessDocs.filter((business): business is Business => !!business)
+          );
+        } else {
+          setFavoriteBusinesses([]);
         }
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+        }
       }
     }
 
-    loadDashboardData();
+    loadDashboardData(true);
+    const interval = setInterval(() => loadDashboardData(false), 20000);
+
+    return () => {
+      mounted = false;
+      clearInterval(interval);
+    };
   }, [userData?.uid]);
+
+  const handleFavoriteToggle = async (businessId: string) => {
+    if (!userData?.uid) return;
+
+    try {
+      const result = await toggleFavorite(userData.uid, businessId);
+
+      setFavoriteIds((prev) => {
+        const next = new Set(prev);
+        if (result.isFavorited) {
+          next.add(businessId);
+        } else {
+          next.delete(businessId);
+        }
+        return next;
+      });
+
+      setFavoriteCount((prev) =>
+        result.isFavorited ? prev + 1 : Math.max(0, prev - 1)
+      );
+
+      const refreshedFavorites = await getFavoritesByUser(userData.uid);
+      setFavoriteBusinesses((
+        await Promise.all(
+          refreshedFavorites.slice(0, 3).map((fav) => getBusinessById(fav.businessId))
+        )
+      ).filter((business): business is Business => !!business));
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+    }
+  };
 
   const firstName = (userData && 'fullName' in userData ? userData.fullName?.split(" ")[0] : null) || "Student";
 
@@ -166,6 +227,8 @@ export default function StudentDashboard() {
                 key={business.id}
                 business={business}
                 showFavoriteButton={true}
+                onFavoriteToggle={handleFavoriteToggle}
+                isFavorited={favoriteIds.has(business.id)}
               />
             ))}
           </div>
@@ -176,6 +239,38 @@ export default function StudentDashboard() {
               <p className="text-sm text-muted-foreground mt-1">
                 Check back later for new listings!
               </p>
+            </CardContent>
+          </Card>
+        )}
+      </section>
+
+      <section>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Favorites</h2>
+          <Link href="/student/favorites" className="text-sm text-amber-300 hover:text-amber-200 flex items-center">
+            View All <ArrowRight className="h-4 w-4 ml-1" />
+          </Link>
+        </div>
+
+        {favoriteBusinesses.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {favoriteBusinesses.map((business) => (
+              <BusinessCard
+                key={business.id}
+                business={business}
+                onFavoriteToggle={handleFavoriteToggle}
+                isFavorited={favoriteIds.has(business.id)}
+                showFavoriteButton={true}
+              />
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="py-10 text-center">
+              <p className="text-muted-foreground">No favorites yet.</p>
+              <Link href="/student/browse" className="text-sm text-amber-300 hover:text-amber-200 mt-2 inline-flex">
+                Browse and save businesses
+              </Link>
             </CardContent>
           </Card>
         )}
