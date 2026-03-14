@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { db, auth } from "@/config/firebase.config";
+import { auth } from "@/config/firebase.config";
+import {
+  getProviderSettings,
+  saveProviderNotifications,
+  saveProviderProfile,
+} from "@/lib/services/settings-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,31 +71,17 @@ export default function ProviderSettingsPage() {
       if (!user) return;
 
       try {
-        // Try providers collection first, then users collection
-        let docRef = doc(db, "providers", user.uid);
-        let docSnap = await getDoc(docRef);
-
-        if (!docSnap.exists()) {
-          docRef = doc(db, "users", user.uid);
-          docSnap = await getDoc(docRef);
-        }
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setProfile({
-            businessName: data.businessName || "",
-            ownerName: data.ownerName || data.firstName + " " + data.lastName || "",
-            email: data.email || user.email || "",
-            phone: data.phone || "",
-            address: data.address || "",
-            description: data.description || "",
-            website: data.website || "",
-          });
-
-          if (data.notifications) {
-            setNotifications(data.notifications);
-          }
-        }
+        const data = await getProviderSettings(user.uid, user.email || "");
+        setProfile({
+          businessName: data.businessName,
+          ownerName: data.ownerName,
+          email: data.email,
+          phone: data.phone,
+          address: data.address,
+          description: data.description,
+          website: data.website,
+        });
+        setNotifications(data.notifications);
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -109,16 +99,13 @@ export default function ProviderSettingsPage() {
     setMessage(null);
 
     try {
-      // Update Firestore
-      const docRef = doc(db, "providers", user.uid);
-      await updateDoc(docRef, {
+      await saveProviderProfile(user.uid, {
         businessName: profile.businessName,
         ownerName: profile.ownerName,
         phone: profile.phone,
         address: profile.address,
         description: profile.description,
         website: profile.website,
-        updatedAt: new Date(),
       });
 
       // Update Firebase Auth profile
@@ -182,11 +169,7 @@ export default function ProviderSettingsPage() {
     setMessage(null);
 
     try {
-      const docRef = doc(db, "providers", user.uid);
-      await updateDoc(docRef, {
-        notifications,
-        updatedAt: new Date(),
-      });
+      await saveProviderNotifications(user.uid, notifications);
 
       setMessage({ type: "success", text: "Notification preferences saved!" });
     } catch (error) {
