@@ -15,6 +15,7 @@ import {
   Trash2, 
   Eye,
   Star,
+  MessageSquare,
   Clock,
   CheckCircle,
   XCircle,
@@ -301,6 +302,12 @@ export default function ProviderBusinessesPage() {
                           <Link href={`/provider/businesses/${business.id}/edit`}>
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
+                          </Link>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/provider/businesses/${business.id}/posts`}>
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            Posts
                           </Link>
                         </Button>
                         <Button
