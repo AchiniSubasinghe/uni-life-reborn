@@ -58,7 +58,11 @@ function BrowsePageContent() {
       let data: Business[];
       
       if (filters.query) {
-        data = await searchBusinesses(filters.query);
+        data = await searchBusinesses(filters.query, {
+          category: filters.category,
+          minRating: filters.minRating,
+          priceRange: filters.priceRange,
+        });
       } else {
         const result = await getApprovedBusinesses(filters, undefined, 24);
         data = result.businesses;
