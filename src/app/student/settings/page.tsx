@@ -2,9 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { db, auth } from "@/config/firebase.config";
+import { auth } from "@/config/firebase.config";
+import {
+  getStudentSettings,
+  saveStudentNotifications,
+  saveStudentProfile,
+} from "@/lib/services/settings-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,30 +67,16 @@ export default function StudentSettingsPage() {
       if (!user) return;
 
       try {
-        // Try students collection first, then users collection
-        let docRef = doc(db, "students", user.uid);
-        let docSnap = await getDoc(docRef);
-
-        if (!docSnap.exists()) {
-          docRef = doc(db, "users", user.uid);
-          docSnap = await getDoc(docRef);
-        }
-
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setProfile({
-            firstName: data.firstName || "",
-            lastName: data.lastName || "",
-            email: data.email || user.email || "",
-            phone: data.phone || "",
-            university: data.university || "",
-            studentId: data.studentId || "",
-          });
-
-          if (data.notifications) {
-            setNotifications(data.notifications);
-          }
-        }
+        const data = await getStudentSettings(user.uid, user.email || "");
+        setProfile({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          university: data.university,
+          studentId: data.studentId,
+        });
+        setNotifications(data.notifications);
       } catch (error) {
         console.error("Error fetching profile:", error);
       } finally {
@@ -104,15 +94,12 @@ export default function StudentSettingsPage() {
     setMessage(null);
 
     try {
-      // Update Firestore
-      const docRef = doc(db, "students", user.uid);
-      await updateDoc(docRef, {
+      await saveStudentProfile(user.uid, {
         firstName: profile.firstName,
         lastName: profile.lastName,
         phone: profile.phone,
         university: profile.university,
         studentId: profile.studentId,
-        updatedAt: new Date(),
       });
 
       // Update Firebase Auth profile
@@ -179,11 +166,7 @@ export default function StudentSettingsPage() {
     setMessage(null);
 
     try {
-      const docRef = doc(db, "students", user.uid);
-      await updateDoc(docRef, {
-        notifications,
-        updatedAt: new Date(),
-      });
+      await saveStudentNotifications(user.uid, notifications);
 
       setMessage({ type: "success", text: "Notification preferences saved!" });
     } catch (error) {
