@@ -6,13 +6,6 @@ import {
   ArrowLeft,
   Upload,
   X,
-  MapPin,
-  Phone,
-  Mail,
-  Globe,
-  DollarSign,
-  Clock,
-  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -23,6 +16,7 @@ import { useAuth } from "@/context/auth-context";
 import { createBusiness } from "@/lib/services/business-service";
 import { BusinessFormData, BusinessCategory, BusinessHours } from "@/types";
 import { DEFAULT_CATEGORIES } from "@/lib/services/category-service";
+import { GoogleMapPicker } from "@/components/shared/GoogleMapPicker";
 
 const DEFAULT_HOURS: BusinessHours = {
   monday: { open: "09:00", close: "18:00", isClosed: false },
@@ -148,6 +142,9 @@ export default function NewBusinessPage() {
     if (!formData.address.trim()) newErrors.address = "Address is required";
     if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    if (!formData.latitude || !formData.longitude) {
+      newErrors.location = "Please select your business location on the map";
+    }
     if (images.length === 0) newErrors.images = "At least one image is required";
 
     setErrors(newErrors);
@@ -396,6 +393,24 @@ export default function NewBusinessPage() {
                 />
               </Field>
             </div>
+
+            <Field>
+              <FieldLabel>Pick Location on Google Maps *</FieldLabel>
+              <GoogleMapPicker
+                latitude={formData.latitude}
+                longitude={formData.longitude}
+                address={`${formData.address} ${formData.city}`.trim()}
+                onLocationChange={({ latitude, longitude, formattedAddress }) => {
+                  handleChange("latitude", latitude);
+                  handleChange("longitude", longitude);
+
+                  if (formattedAddress && !formData.address.trim()) {
+                    handleChange("address", formattedAddress);
+                  }
+                }}
+              />
+              {errors.location && <FieldError>{errors.location}</FieldError>}
+            </Field>
           </CardContent>
         </Card>
 
