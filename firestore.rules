@@ -24,11 +24,24 @@ service cloud.firestore {
     }
     
     function isProvider() {
-      return isAuthenticated() && getUserRole() == 'provider';
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && getUserRole() == 'provider')
+        || exists(/databases/$(database)/documents/providers/$(request.auth.uid))
+      );
     }
     
     function isStudent() {
-      return isAuthenticated() && getUserRole() == 'student';
+      return isAuthenticated() && (
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && getUserRole() == 'student')
+        || exists(/databases/$(database)/documents/students/$(request.auth.uid))
+      );
+    }
+
+    function isBusinessOwner(businessId) {
+      return isProvider()
+        && get(/databases/$(database)/documents/businesses/$(businessId)).data.providerId == request.auth.uid;
     }
     
     // Users collection
@@ -97,10 +110,11 @@ service cloud.firestore {
       // Admins can read all reviews
       allow read: if resource.data.isVisible == true
                   || isOwner(resource.data.userId)
+                  || isBusinessOwner(resource.data.businessId)
                   || isAdmin();
       
       // Only authenticated users (students) can create reviews
-      allow create: if isAuthenticated()
+      allow create: if isStudent()
                     && request.resource.data.userId == request.auth.uid
                     && request.resource.data.isVisible == true
                     && request.resource.data.isReported == false;
@@ -113,7 +127,21 @@ service cloud.firestore {
                     || isAdmin();
       
       // Users can delete their own reviews, admins can delete any
-      allow delete: if isOwner(resource.data.userId) || isAdmin();
+      allow delete: if isOwner(resource.data.userId)
+                    || isBusinessOwner(resource.data.businessId)
+                    || isAdmin();
+    }
+
+    // Business posts collection
+    match /businessPosts/{postId} {
+      allow read: if true;
+
+      allow create: if isProvider()
+                    && request.resource.data.providerId == request.auth.uid
+                    && isOwner(request.resource.data.providerId);
+
+      allow update, delete: if (isProvider() && resource.data.providerId == request.auth.uid)
+                            || isAdmin();
     }
     
     // Favorites collection
