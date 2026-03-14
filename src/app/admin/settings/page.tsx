@@ -2,9 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
-import { db, auth } from "@/config/firebase.config";
+import { auth } from "@/config/firebase.config";
+import {
+  getAdminSettings,
+  getPlatformSettings,
+  saveAdminNotifications,
+  saveAdminProfile,
+  savePlatformSettings,
+} from "@/lib/services/settings-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,30 +80,18 @@ export default function AdminSettingsPage() {
       if (!user) return;
       
       try {
-        // Fetch admin profile
-        const adminRef = doc(db, "users", user.uid);
-        const adminSnap = await getDoc(adminRef);
-        
-        if (adminSnap.exists()) {
-          const data = adminSnap.data();
-          setProfile({
-            firstName: data.firstName || "",
-            lastName: data.lastName || "",
-            email: data.email || user.email || "",
-          });
-          
-          if (data.notifications) {
-            setNotifications(data.notifications);
-          }
-        }
-        
-        // Fetch platform settings
-        const settingsRef = doc(db, "settings", "platform");
-        const settingsSnap = await getDoc(settingsRef);
-        
-        if (settingsSnap.exists()) {
-          setPlatformSettings(settingsSnap.data() as PlatformSettings);
-        }
+        const [adminSettings, platformSettingsData] = await Promise.all([
+          getAdminSettings(user.uid, user.email || ""),
+          getPlatformSettings(),
+        ]);
+
+        setProfile({
+          firstName: adminSettings.firstName,
+          lastName: adminSettings.lastName,
+          email: adminSettings.email,
+        });
+        setNotifications(adminSettings.notifications);
+        setPlatformSettings(platformSettingsData);
       } catch (error) {
         console.error("Error fetching settings:", error);
       } finally {
@@ -115,11 +109,9 @@ export default function AdminSettingsPage() {
     setMessage(null);
     
     try {
-      const docRef = doc(db, "users", user.uid);
-      await updateDoc(docRef, {
+      await saveAdminProfile(user.uid, {
         firstName: profile.firstName,
         lastName: profile.lastName,
-        updatedAt: new Date(),
       });
       
       setMessage({ type: "success", text: "Profile updated successfully!" });
@@ -176,11 +168,7 @@ export default function AdminSettingsPage() {
     setMessage(null);
     
     try {
-      const docRef = doc(db, "users", user.uid);
-      await updateDoc(docRef, {
-        notifications,
-        updatedAt: new Date(),
-      });
+      await saveAdminNotifications(user.uid, notifications);
       
       setMessage({ type: "success", text: "Notification preferences saved!" });
     } catch (error) {
@@ -196,12 +184,7 @@ export default function AdminSettingsPage() {
     setMessage(null);
     
     try {
-      const settingsRef = doc(db, "settings", "platform");
-      await updateDoc(settingsRef, {
-        ...platformSettings,
-        updatedAt: new Date(),
-        updatedBy: user?.uid,
-      });
+      await savePlatformSettings(platformSettings, user?.uid || "");
       
       setMessage({ type: "success", text: "Platform settings saved!" });
     } catch (error) {
