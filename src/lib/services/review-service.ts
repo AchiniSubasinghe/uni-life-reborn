@@ -14,8 +14,8 @@ import {
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "@/config/firebase.config";
-import { Review, ReviewFormData } from "@/types";
-import { updateBusinessRating, getBusinessById } from "./business-service";
+import { Review, ReviewFormData, UserRole } from "@/types";
+import { updateBusinessRating, getBusinessById, getBusinessesByProvider } from "./business-service";
 
 const REVIEWS_COLLECTION = "reviews";
 
@@ -27,8 +27,13 @@ export async function createReview(
   businessName: string,
   userId: string,
   userName: string,
-  data: ReviewFormData
+  data: ReviewFormData,
+  userRole: UserRole = "student"
 ): Promise<string> {
+  if (userRole !== "student") {
+    throw new Error("Only students can create reviews");
+  }
+
   // Check if user already reviewed this business
   const existingReview = await getUserReviewForBusiness(userId, businessId);
   if (existingReview) {
@@ -103,6 +108,25 @@ export async function getReviewsByUser(userId: string): Promise<Review[]> {
 
   const snapshot = await getDocs(q);
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Review));
+}
+
+export async function getReviewsForProvider(providerId: string): Promise<Review[]> {
+  const businesses = await getBusinessesByProvider(providerId);
+  const businessIds = businesses.map((business) => business.id);
+
+  if (!businessIds.length) {
+    return [];
+  }
+
+  const reviewsByBusiness = await Promise.all(
+    businessIds.map((businessId) => getReviewsForBusiness(businessId, true))
+  );
+
+  return reviewsByBusiness.flat().sort((a, b) => {
+    const dateA = a.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    const dateB = b.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    return dateB - dateA;
+  });
 }
 
 export async function getUserReviewForBusiness(
@@ -244,6 +268,46 @@ export async function deleteReview(reviewId: string): Promise<void> {
     // Recalculate business rating
     await recalculateBusinessRating(review.businessId);
   }
+}
+
+export async function canDeleteReview(
+  reviewId: string,
+  actorId: string,
+  actorRole: UserRole
+): Promise<boolean> {
+  const review = await getReviewById(reviewId);
+  if (!review) {
+    return false;
+  }
+
+  if (actorRole === "admin") {
+    return true;
+  }
+
+  if (actorRole === "student") {
+    return review.userId === actorId;
+  }
+
+  if (actorRole === "provider") {
+    const business = await getBusinessById(review.businessId);
+    return business?.providerId === actorId;
+  }
+
+  return false;
+}
+
+export async function deleteReviewByActor(
+  reviewId: string,
+  actorId: string,
+  actorRole: UserRole
+): Promise<void> {
+  const authorized = await canDeleteReview(reviewId, actorId, actorRole);
+
+  if (!authorized) {
+    throw new Error("You are not authorized to delete this review");
+  }
+
+  await deleteReview(reviewId);
 }
 
 // ============================================
