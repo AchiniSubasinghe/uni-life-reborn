@@ -102,6 +102,9 @@ export interface Business {
   
   // Approval Status
   status: BusinessStatus;
+  isBlocked?: boolean;
+  blockedAt?: Timestamp;
+  blockedBy?: string;
   rejectionReason?: string;
   approvedAt?: Timestamp;
   approvedBy?: string;
@@ -144,6 +147,21 @@ export interface Review {
   isReported: boolean;
   reportReason?: string;
   
+  createdAt: Timestamp;
+  updatedAt?: Timestamp;
+}
+
+// ============================================
+// BUSINESS POST TYPES
+// ============================================
+export interface BusinessPost {
+  id: string;
+  businessId: string;
+  providerId: string;
+  providerName: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
   createdAt: Timestamp;
   updatedAt?: Timestamp;
 }
@@ -263,4 +281,30 @@ export interface ReviewFormData {
   rating: 1 | 2 | 3 | 4 | 5;
   comment: string;
   images?: File[];
+}
+
+// ============================================
+// SETTINGS TYPES
+// ============================================
+export interface BaseNotificationSettings {
+  emailNotifications: boolean;
+}
+
+export interface StudentNotificationSettings extends BaseNotificationSettings {
+  newBusinesses: boolean;
+  reviewResponses: boolean;
+  weeklyDigest: boolean;
+}
+
+export interface ProviderNotificationSettings extends BaseNotificationSettings {
+  newReviews: boolean;
+  approvalUpdates: boolean;
+  weeklyReport: boolean;
+}
+
+export interface AdminNotificationSettings extends BaseNotificationSettings {
+  newBusinessSubmissions: boolean;
+  reportedReviews: boolean;
+  newUserSignups: boolean;
+  dailyDigest: boolean;
 }
