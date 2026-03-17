@@ -2,62 +2,35 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Loader2, MessageSquare, Trash2 } from "lucide-react";
+import { Loader2, MessageSquare, ArrowRight, Building2, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReviewCard } from "@/components/shared/ReviewCard";
 import { useAuth } from "@/context/auth-context";
-import { deleteReviewByActor, getReviewsForProvider, reportReview } from "@/lib/services/review-service";
-import { Review } from "@/types";
+import { getBusinessesByProvider } from "@/lib/services/business-service";
+import { Business } from "@/types";
 
 export default function ProviderReviewsPage() {
   const { user } = useAuth();
 
-  const [reviews, setReviews] = useState<Review[]>([]);
+  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadReviews() {
+    async function loadBusinesses() {
       if (!user?.uid) return;
 
       try {
-        const data = await getReviewsForProvider(user.uid);
-        setReviews(data);
+        const data = await getBusinessesByProvider(user.uid);
+        setBusinesses(data);
       } catch (error) {
-        console.error("Error loading provider reviews:", error);
+        console.error("Error loading provider businesses:", error);
       } finally {
         setLoading(false);
       }
     }
 
-    loadReviews();
+    loadBusinesses();
   }, [user?.uid]);
-
-  const handleDeleteReview = async (reviewId: string) => {
-    if (!user?.uid) return;
-    if (!confirm("Delete this review?")) return;
-
-    setDeletingId(reviewId);
-    try {
-      await deleteReviewByActor(reviewId, user.uid, "provider");
-      setReviews((prev) => prev.filter((review) => review.id !== reviewId));
-    } catch (error) {
-      console.error("Error deleting review:", error);
-      alert("Unable to delete review");
-    } finally {
-      setDeletingId(null);
-    }
-  };
-
-  const handleReportReview = async (reviewId: string, reason: string) => {
-    await reportReview(reviewId, reason);
-    setReviews((prev) =>
-      prev.map((review) =>
-        review.id === reviewId ? { ...review, isReported: true } : review
-      )
-    );
-  };
 
   if (loading) {
     return (
@@ -72,17 +45,17 @@ export default function ProviderReviewsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Business Reviews</h1>
         <p className="text-muted-foreground">
-          View feedback on your businesses and remove inappropriate reviews.
+          Select a business to view all student reviews and moderate feedback.
         </p>
       </div>
 
-      {reviews.length === 0 ? (
+      {businesses.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center space-y-3">
             <MessageSquare className="h-10 w-10 mx-auto text-muted-foreground" />
-            <p className="font-medium">No reviews yet</p>
+            <p className="font-medium">No businesses yet</p>
             <p className="text-muted-foreground text-sm">
-              Reviews from students will appear here.
+              Add a business first to start receiving reviews.
             </p>
             <Button asChild variant="outline">
               <Link href="/provider/businesses">Go to My Businesses</Link>
@@ -91,30 +64,34 @@ export default function ProviderReviewsPage() {
         </Card>
       ) : (
         <div className="space-y-4">
-          {reviews.map((review) => (
-            <Card key={review.id}>
+          {businesses.map((business) => (
+            <Card key={business.id}>
               <CardHeader className="pb-2">
-                <CardTitle className="text-base">{review.businessName}</CardTitle>
+                <CardTitle className="text-base flex items-center justify-between gap-3">
+                  <span className="truncate">{business.name}</span>
+                  <span className="text-sm text-muted-foreground font-normal">
+                    {business.totalReviews} reviews
+                  </span>
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <ReviewCard
-                  review={review}
-                  showBusinessName={false}
-                  onReport={handleReportReview}
-                  showReportButton={!review.isReported}
-                />
-                <div className="flex justify-end">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="text-destructive hover:text-destructive"
-                    onClick={() => handleDeleteReview(review.id)}
-                    disabled={deletingId === review.id}
-                  >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    {deletingId === review.id ? "Deleting..." : "Delete Review"}
-                  </Button>
+              <CardContent>
+                <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4" />
+                    <span className="capitalize">{business.category}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
+                    <span>{business.averageRating.toFixed(1)}</span>
+                  </div>
                 </div>
+
+                <Button asChild variant="outline" className="w-full">
+                  <Link href={`/provider/reviews/${business.id}`}>
+                    View Reviews
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
               </CardContent>
             </Card>
           ))}
