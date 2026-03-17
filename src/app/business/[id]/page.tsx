@@ -13,6 +13,9 @@ import {
   Share2,
   ArrowLeft,
   DollarSign,
+  Plus,
+  Trash2,
+  User,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -20,12 +23,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReviewCard } from "@/components/shared/ReviewCard";
 import { StarRating } from "@/components/shared/StarRating";
 import { useAuth } from "@/context/auth-context";
-import { getBusinessById } from "@/lib/services/business-service";
+import { addBusinessImages, getBusinessById, removeBusinessImage } from "@/lib/services/business-service";
 import { getReviewsForBusiness, createReview, reportReview, deleteReviewByActor } from "@/lib/services/review-service";
 import { toggleFavorite, isFavorited } from "@/lib/services/favorites-service";
-import { getBusinessPosts } from "@/lib/services/business-post-service";
+import { createBusinessPost, deleteBusinessPost, getBusinessPosts } from "@/lib/services/business-post-service";
 import { getCategoryName } from "@/lib/services/category-service";
-import { Business, BusinessPost, Review, ReviewFormData } from "@/types";
+import { getUserById } from "@/lib/services/user-service";
+import { Business, BusinessPost, Provider, Review, ReviewFormData, User as PlatformUser } from "@/types";
 import { formatTime } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +43,7 @@ const PRICE_LABELS: Record<number, string> = {
 export default function BusinessDetailsPage() {
   const params = useParams();
   const pathname = usePathname();
-  const { user, userData, role } = useAuth();
+  const { user, userData, role, loading: authLoading } = useAuth();
   const businessId = params.id as string;
 
   const [business, setBusiness] = useState<Business | null>(null);
@@ -55,10 +59,20 @@ export default function BusinessDetailsPage() {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [uploadingImages, setUploadingImages] = useState(false);
+  const [deletingImage, setDeletingImage] = useState<string | null>(null);
+  const [providerInfo, setProviderInfo] = useState<PlatformUser | null>(null);
+
+  const [newPostTitle, setNewPostTitle] = useState("");
+  const [newPostContent, setNewPostContent] = useState("");
+  const [newPostImage, setNewPostImage] = useState<File | undefined>(undefined);
+  const [creatingPost, setCreatingPost] = useState(false);
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
 
   useEffect(() => {
+    if (authLoading) return;
     loadBusinessDetails();
-  }, [businessId]);
+  }, [businessId, authLoading, user?.uid, role]);
 
   useEffect(() => {
     if (user?.uid && businessId) {
@@ -76,6 +90,13 @@ export default function BusinessDetailsPage() {
       setBusiness(businessData);
       setReviews(reviewsData);
       setPosts(postsData);
+
+      if (businessData?.providerId) {
+        const providerData = await getUserById(businessData.providerId);
+        setProviderInfo(providerData);
+      } else {
+        setProviderInfo(null);
+      }
     } catch (error) {
       console.error("Error loading business details:", error);
     } finally {
@@ -165,6 +186,91 @@ export default function BusinessDetailsPage() {
     }
   };
 
+  const handleAddImages = async (files: FileList | null) => {
+    if (!files || !user?.uid || !business) return;
+
+    const imageFiles = Array.from(files).filter((file) => file.type.startsWith("image/"));
+    if (!imageFiles.length) return;
+
+    setUploadingImages(true);
+    try {
+      await addBusinessImages(business.id, user.uid, imageFiles);
+      const refreshed = await getBusinessById(business.id);
+      setBusiness(refreshed);
+    } catch (error) {
+      console.error("Error adding images:", error);
+      alert("Failed to upload images");
+    } finally {
+      setUploadingImages(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageUrl: string) => {
+    if (!user?.uid || !business) return;
+    if (!confirm("Delete this image?")) return;
+
+    setDeletingImage(imageUrl);
+    try {
+      await removeBusinessImage(business.id, user.uid, imageUrl);
+      const refreshed = await getBusinessById(business.id);
+      setBusiness(refreshed);
+      if (currentImageIndex > 0) {
+        setCurrentImageIndex((prev) => prev - 1);
+      }
+    } catch (error) {
+      console.error("Error deleting image:", error);
+    } finally {
+      setDeletingImage(null);
+    }
+  };
+
+  const handleCreatePost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!business || !user?.uid || !newPostTitle.trim() || !newPostContent.trim()) return;
+
+    setCreatingPost(true);
+    try {
+      const providerData = userData as any;
+      const providerName = providerData?.firstName
+        ? `${providerData.firstName} ${providerData.lastName || ""}`.trim()
+        : providerData?.fullName || "Provider";
+
+      await createBusinessPost(
+        business.id,
+        user.uid,
+        providerName,
+        newPostTitle.trim(),
+        newPostContent.trim(),
+        newPostImage
+      );
+
+      const refreshedPosts = await getBusinessPosts(business.id);
+      setPosts(refreshedPosts);
+      setNewPostTitle("");
+      setNewPostContent("");
+      setNewPostImage(undefined);
+    } catch (error) {
+      console.error("Error creating post:", error);
+      alert("Failed to create post");
+    } finally {
+      setCreatingPost(false);
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!user?.uid || !confirm("Delete this post?")) return;
+
+    setDeletingPostId(postId);
+    try {
+      await deleteBusinessPost(postId, user.uid);
+      setPosts((prev) => prev.filter((post) => post.id !== postId));
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setDeletingPostId(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -193,7 +299,15 @@ export default function BusinessDetailsPage() {
 
   const userHasReviewed = reviews.some((r) => r.userId === user?.uid);
   const canReview = !!user?.uid && role !== "provider" && role !== "admin";
-  const backToBrowseHref = pathname.startsWith("/student") ? "/student/browse" : "/browse";
+  const isProviderOwner = !!user?.uid && role === "provider" && business.providerId === user.uid;
+  const isAdminViewer = role === "admin";
+  const backToBrowseHref = pathname.startsWith("/student")
+    ? "/student/browse"
+    : pathname.startsWith("/provider")
+    ? "/provider/businesses"
+    : pathname.startsWith("/admin")
+    ? "/admin/businesses"
+    : "/browse";
 
   return (
     <div className="min-h-screen bg-background">
@@ -232,23 +346,56 @@ export default function BusinessDetailsPage() {
                 {business.images.length > 1 && (
                   <div className="flex gap-2 overflow-x-auto pb-2">
                     {business.images.map((img, i) => (
-                      <button
-                        key={i}
-                        onClick={() => setCurrentImageIndex(i)}
-                        className={cn(
-                          "h-16 w-24 rounded-md overflow-hidden flex-shrink-0 border-2",
-                          currentImageIndex === i
-                            ? "border-primary"
-                            : "border-transparent"
+                      <div key={i} className="relative">
+                        <button
+                          onClick={() => setCurrentImageIndex(i)}
+                          className={cn(
+                            "h-16 w-24 rounded-md overflow-hidden flex-shrink-0 border-2",
+                            currentImageIndex === i
+                              ? "border-primary"
+                              : "border-transparent"
+                          )}
+                        >
+                          <img
+                            src={img}
+                            alt={`${business.name} ${i + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+
+                        {isProviderOwner && (
+                          <button
+                            className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-white flex items-center justify-center"
+                            onClick={() => handleDeleteImage(img)}
+                            disabled={deletingImage === img}
+                            type="button"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         )}
-                      >
-                        <img
-                          src={img}
-                          alt={`${business.name} ${i + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
+                      </div>
                     ))}
+                  </div>
+                )}
+
+                {isProviderOwner && (
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <label className="inline-flex items-center gap-2 text-sm border rounded-md px-3 py-2 cursor-pointer hover:bg-muted">
+                      <Plus className="h-4 w-4" />
+                      {uploadingImages ? "Uploading..." : "Add More Images"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => handleAddImages(e.target.files)}
+                        disabled={uploadingImages}
+                      />
+                    </label>
+
+                    <Button asChild variant="outline" size="sm">
+                      <Link href={`/provider/businesses/${business.id}/edit`}>Update Business Details</Link>
+                    </Button>
                   </div>
                 )}
               </div>
@@ -419,7 +566,45 @@ export default function BusinessDetailsPage() {
 
             {/* Provider Posts */}
             <div>
-              <h2 className="text-lg font-semibold mb-4">Latest Updates</h2>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold">Latest Updates</h2>
+              </div>
+
+              {isProviderOwner && (
+                <Card className="mb-4">
+                  <CardHeader>
+                    <CardTitle>Add a Post</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <form onSubmit={handleCreatePost} className="space-y-3">
+                      <input
+                        className="w-full h-10 px-3 border rounded-md bg-background"
+                        placeholder="Post title"
+                        value={newPostTitle}
+                        onChange={(e) => setNewPostTitle(e.target.value)}
+                      />
+                      <textarea
+                        className="w-full min-h-24 p-3 border rounded-md bg-background"
+                        placeholder="Share updates with students"
+                        value={newPostContent}
+                        onChange={(e) => setNewPostContent(e.target.value)}
+                      />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewPostImage(e.target.files?.[0])}
+                      />
+                      <Button
+                        type="submit"
+                        disabled={creatingPost || !newPostTitle.trim() || !newPostContent.trim()}
+                      >
+                        {creatingPost ? "Publishing..." : "Publish Post"}
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              )}
+
               {posts.length > 0 ? (
                 <div className="space-y-4">
                   {posts.map((post) => (
@@ -432,6 +617,18 @@ export default function BusinessDetailsPage() {
                               by {post.providerName}
                             </p>
                           </div>
+                          {isProviderOwner && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-destructive hover:text-destructive"
+                              onClick={() => handleDeletePost(post.id)}
+                              disabled={deletingPostId === post.id}
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              {deletingPostId === post.id ? "Deleting..." : "Delete"}
+                            </Button>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">{post.content}</p>
                         {post.imageUrl && (
@@ -535,6 +732,26 @@ export default function BusinessDetailsPage() {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {isAdminViewer && providerInfo && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Provider Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 text-sm">
+                  <p className="font-medium">{business.providerName}</p>
+                  <p className="text-muted-foreground">{providerInfo.email}</p>
+                  {((providerInfo as Provider).phone || (providerInfo as any).phone) && (
+                    <p className="text-muted-foreground">
+                      {(providerInfo as Provider).phone || (providerInfo as any).phone}
+                    </p>
+                  )}
                 </CardContent>
               </Card>
             )}

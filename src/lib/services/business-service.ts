@@ -69,6 +69,12 @@ export async function getBusinessById(id: string): Promise<Business | null> {
   return null;
 }
 
+export async function getAllBusinesses(): Promise<Business[]> {
+  const q = query(collection(db, BUSINESSES_COLLECTION), orderBy("createdAt", "desc"));
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Business));
+}
+
 export async function getApprovedBusinesses(
   filters?: SearchFilters,
   lastDoc?: DocumentSnapshot,
@@ -302,6 +308,66 @@ export async function updateBusiness(
   }
   
   await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), updateData);
+}
+
+export async function addBusinessImages(
+  businessId: string,
+  providerId: string,
+  images: File[]
+): Promise<void> {
+  if (!images.length) {
+    return;
+  }
+
+  const business = await getBusinessById(businessId);
+  if (!business) {
+    throw new Error("Business not found");
+  }
+
+  if (business.providerId !== providerId) {
+    throw new Error("Only the business owner can add images");
+  }
+
+  const uploadedUrls = await uploadBusinessImages(images, providerId);
+  const mergedImages = [...(business.images || []), ...uploadedUrls];
+
+  await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), {
+    images: mergedImages,
+    coverImage: business.coverImage || mergedImages[0] || "",
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function removeBusinessImage(
+  businessId: string,
+  providerId: string,
+  imageUrl: string
+): Promise<void> {
+  const business = await getBusinessById(businessId);
+  if (!business) {
+    throw new Error("Business not found");
+  }
+
+  if (business.providerId !== providerId) {
+    throw new Error("Only the business owner can remove images");
+  }
+
+  const updatedImages = (business.images || []).filter((url) => url !== imageUrl);
+
+  try {
+    await deleteObject(ref(storage, imageUrl));
+  } catch (error) {
+    console.error("Error deleting business image:", error);
+  }
+
+  await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), {
+    images: updatedImages,
+    coverImage:
+      business.coverImage === imageUrl
+        ? updatedImages[0] || ""
+        : business.coverImage,
+    updatedAt: serverTimestamp(),
+  });
 }
 
 export async function updateBusinessStatus(
