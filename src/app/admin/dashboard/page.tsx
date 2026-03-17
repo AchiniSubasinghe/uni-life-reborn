@@ -286,7 +286,7 @@ export default function AdminDashboard() {
                         </p>
                       )}
                     </div>
-                    <Link href={`/admin/reviews/${review.id}`}>
+                    <Link href={`/admin/reviews/${review.businessId}`}>
                       <Button variant="outline" size="sm">
                         Review
                       </Button>
