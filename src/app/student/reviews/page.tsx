@@ -201,7 +201,7 @@ export default function StudentReviewsPage() {
               Start exploring services and share your experiences!
             </p>
             <Button asChild>
-              <Link href="/browse">Browse Services</Link>
+              <Link href="/student/browse">Browse Services</Link>
             </Button>
           </CardContent>
         </Card>
