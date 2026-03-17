@@ -98,6 +98,8 @@ NEXT_PUBLIC_APP_ID=
 
 # Groq — free tier at https://console.groq.com
 GROQ_API_KEY=
+# Google Maps API Key(use for maps,location services and geocoding)
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
 ```
 
 ---
