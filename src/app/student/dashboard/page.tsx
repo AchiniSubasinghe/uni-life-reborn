@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { BusinessCard } from "@/components/shared/BusinessCard";
 import { CategoryCard } from "@/components/shared/CategoryCard";
-import { getApprovedBusinesses, getBusinessById } from "@/lib/services/business-service";
+import { getAllBusinesses, getApprovedBusinesses, getBusinessById } from "@/lib/services/business-service";
 import { getAllCategories } from "@/lib/services/category-service";
 import { getFavoritesByUser, toggleFavorite } from "@/lib/services/favorites-service";
 import { Business, Category } from "@/types";
@@ -31,15 +31,25 @@ export default function StudentDashboard() {
       }
 
       try {
-        const [businessesResult, categoriesData, favoritesData] = await Promise.all([
-          getApprovedBusinesses({}, undefined, 6),
+        const [categoriesData, favoritesData] = await Promise.all([
           getAllCategories(),
           userData?.uid ? getFavoritesByUser(userData.uid) : Promise.resolve([]),
         ]);
 
+        let approvedBusinesses: Business[] = [];
+        try {
+          const businessesResult = await getApprovedBusinesses({}, undefined, 6);
+          approvedBusinesses = businessesResult.businesses;
+        } catch {
+          const allBusinesses = await getAllBusinesses();
+          approvedBusinesses = allBusinesses
+            .filter((business) => business.status === "approved" && !business.isBlocked)
+            .slice(0, 6);
+        }
+
         if (!mounted) return;
 
-        setRecentBusinesses(businessesResult.businesses);
+        setRecentBusinesses(approvedBusinesses);
         setCategories(categoriesData.slice(0, 8));
         setFavoriteCount(favoritesData.length);
         setFavoriteIds(new Set(favoritesData.map((fav) => fav.businessId)));

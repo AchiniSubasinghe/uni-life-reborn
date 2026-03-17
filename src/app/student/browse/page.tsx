@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
-import { getApprovedBusinesses, getNearbyBusinesses } from "@/lib/services/business-service";
+import { getAllBusinesses, getApprovedBusinesses, getNearbyBusinesses } from "@/lib/services/business-service";
 import { getFavoritesByUser, toggleFavorite } from "@/lib/services/favorites-service";
+import { trackStudentSearch } from "@/lib/services/analytics-service";
 import { DEFAULT_CATEGORIES } from "@/lib/services/category-service";
 import { Business, BusinessCategory, GeoLocation } from "@/types";
 import { BusinessCard } from "@/components/shared/BusinessCard";
@@ -22,7 +24,8 @@ import {
   X 
 } from "lucide-react";
 
-export default function StudentBrowsePage() {
+function StudentBrowseContent() {
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -37,6 +40,19 @@ export default function StudentBrowsePage() {
   const [nearbyOnly, setNearbyOnly] = useState(false);
   const [radiusKm, setRadiusKm] = useState<number>(5);
   const [locationError, setLocationError] = useState<string>("");
+
+  useEffect(() => {
+    const categoryParam = searchParams.get("category") as BusinessCategory | null;
+    const queryParam = searchParams.get("q");
+
+    if (categoryParam) {
+      setSelectedCategory(categoryParam);
+    }
+
+    if (queryParam) {
+      setSearchQuery(queryParam);
+    }
+  }, [searchParams]);
 
   const applyClientFilters = useCallback((input: Business[]) => {
     let result = [...input];
@@ -78,8 +94,13 @@ export default function StudentBrowsePage() {
           selectedCategory || undefined
         );
       } else {
-        const result = await getApprovedBusinesses({}, undefined, 60);
-        baseResults = result.businesses;
+        try {
+          const result = await getApprovedBusinesses({}, undefined, 60);
+          baseResults = result.businesses;
+        } catch {
+          const allBusinesses = await getAllBusinesses();
+          baseResults = allBusinesses.filter((business) => business.status === "approved" && !business.isBlocked);
+        }
       }
 
       let results = applyClientFilters(baseResults);
@@ -125,6 +146,12 @@ export default function StudentBrowsePage() {
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+
+    if (user?.uid && query.trim()) {
+      trackStudentSearch(user.uid, query, selectedCategory || undefined).catch((error) => {
+        console.error("Error tracking search:", error);
+      });
+    }
   };
 
   const handleFavoriteToggle = async (businessId: string) => {
@@ -430,5 +457,19 @@ export default function StudentBrowsePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function StudentBrowsePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <StudentBrowseContent />
+    </Suspense>
   );
 }
