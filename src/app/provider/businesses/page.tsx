@@ -293,7 +293,7 @@ export default function ProviderBusinessesPage() {
                       {/* Actions */}
                       <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="sm" asChild>
-                          <Link href={`/business/${business.id}`}>
+                          <Link href={`/provider/businesses/${business.id}`}>
                             <Eye className="h-4 w-4 mr-1" />
                             View
                           </Link>
