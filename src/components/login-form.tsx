@@ -4,17 +4,21 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Field,
-  FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { auth, db } from "@/config/firebase.config"
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { useState } from "react";
-import { GoogleAuthProvider, signInWithPopup, OAuthProvider } from "firebase/auth";
+import {
+  getRedirectResult,
+  GoogleAuthProvider,
+  OAuthProvider,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signInWithRedirect,
+  User,
+} from "firebase/auth";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import Cookies from "js-cookie";
@@ -56,6 +60,27 @@ function getDashboardUrl(role: UserRole): string {
   }
 }
 
+function getAuthErrorMessage(error: any): string {
+  switch (error?.code) {
+    case "auth/invalid-email":
+      return "Please enter a valid email address.";
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-credential":
+      return "Invalid email or password.";
+    case "auth/too-many-requests":
+      return "Too many attempts. Please wait a moment and try again.";
+    case "auth/popup-blocked":
+      return "Popup was blocked by your browser. Please allow popups and try again.";
+    case "auth/account-exists-with-different-credential":
+      return "An account already exists with this email using a different sign-in method.";
+    case "auth/operation-not-allowed":
+      return "This sign-in method is not enabled in Firebase Authentication settings.";
+    default:
+      return error?.message || "Authentication failed. Please try again.";
+  }
+}
+
 export function LoginForm({
   className,
   ...props
@@ -66,6 +91,42 @@ export function LoginForm({
   const [popupLoading, setPopupLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
+
+  const completeSocialLogin = async (firebaseUser: User, signupProvider: "google" | "apple") => {
+    const role = await getUserRole(firebaseUser.uid);
+
+    if (!role) {
+      router.push(`/signup?${signupProvider}=true`);
+      return;
+    }
+
+    const token = await firebaseUser.getIdToken();
+    Cookies.set("auth-token", token, { expires: 7 });
+    Cookies.set("user-role", role, { expires: 7 });
+
+    router.push(getDashboardUrl(role));
+  };
+
+  useEffect(() => {
+    const resolveRedirectSignIn = async () => {
+      try {
+        const redirectResult = await getRedirectResult(auth);
+        if (!redirectResult?.user) return;
+
+        const providerId = redirectResult.providerId;
+        if (providerId === "google.com") {
+          await completeSocialLogin(redirectResult.user, "google");
+        } else if (providerId === "apple.com") {
+          await completeSocialLogin(redirectResult.user, "apple");
+        }
+      } catch (err: any) {
+        setError(getAuthErrorMessage(err));
+      }
+    };
+
+    resolveRedirectSignIn();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,30 +169,31 @@ export function LoginForm({
     if (popupLoading) return;
     setPopupLoading(true);
     setError("");
+    setInfo("");
 
     try {
       const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+
       const result = await signInWithPopup(auth, provider);
-
-      // Get user role
-      const role = await getUserRole(result.user.uid);
-
-      if (!role) {
-        // New Google user - redirect to signup selection
-        router.push("/signup?google=true");
-        return;
+      await completeSocialLogin(result.user, "google");
+    } catch (error: any) {
+      if (error.code === "auth/popup-blocked" || error.code === "auth/web-storage-unsupported") {
+        try {
+          const provider = new GoogleAuthProvider();
+          provider.setCustomParameters({ prompt: "select_account" });
+          setInfo("Using redirect sign-in because popup was blocked...");
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError: any) {
+          setError(getAuthErrorMessage(redirectError));
+          return;
+        }
       }
 
-      // Set cookies for middleware
-      const token = await result.user.getIdToken();
-      Cookies.set("auth-token", token, { expires: 7 });
-      Cookies.set("user-role", role, { expires: 7 });
-
-      router.push(getDashboardUrl(role));
-    } catch (error: any) {
       if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
         console.error(error.message);
-        setError(error.message);
+        setError(getAuthErrorMessage(error));
       }
     } finally {
       setPopupLoading(false);
@@ -142,6 +204,7 @@ export function LoginForm({
     if (popupLoading) return;
     setPopupLoading(true);
     setError("");
+    setInfo("");
 
     try {
       const provider = new OAuthProvider("apple.com");
@@ -149,24 +212,11 @@ export function LoginForm({
       provider.addScope("name");
 
       const result = await signInWithPopup(auth, provider);
-
-      // Get user role
-      const role = await getUserRole(result.user.uid);
-
-      if (!role) {
-        router.push("/signup?apple=true");
-        return;
-      }
-
-      const token = await result.user.getIdToken();
-      Cookies.set("auth-token", token, { expires: 7 });
-      Cookies.set("user-role", role, { expires: 7 });
-
-      router.push(getDashboardUrl(role));
+      await completeSocialLogin(result.user, "apple");
     } catch (error: any) {
       if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
         console.error(error.message);
-        setError(error.message);
+        setError(getAuthErrorMessage(error));
       }
     } finally {
       setPopupLoading(false);
@@ -264,6 +314,12 @@ export function LoginForm({
           {error && (
             <div className="flex items-center gap-2 rounded-lg bg-red-500/10 border border-red-400/20 px-3 py-2.5">
               <span className="text-red-300 text-sm">{error}</span>
+            </div>
+          )}
+
+          {info && (
+            <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-400/20 px-3 py-2.5">
+              <span className="text-amber-200 text-sm">{info}</span>
             </div>
           )}
 
