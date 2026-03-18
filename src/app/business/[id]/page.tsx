@@ -136,6 +136,7 @@ export default function BusinessDetailsPage() {
         businessId,
         business.name,
         user.uid,
+        user.email || "",
         (userData as any)?.fullName || user.displayName || "Anonymous",
         reviewData,
         effectiveRole
