@@ -302,6 +302,18 @@ export default function BusinessDetailsPage() {
   const canReview = !!user?.uid && role !== "provider" && role !== "admin";
   const isProviderOwner = !!user?.uid && role === "provider" && business.providerId === user.uid;
   const isAdminViewer = role === "admin";
+  const legacyLocationBusiness = business as Business & {
+    latitude?: number;
+    longitude?: number;
+  };
+  const latitude = business.location?.latitude ?? legacyLocationBusiness.latitude;
+  const longitude = business.location?.longitude ?? legacyLocationBusiness.longitude;
+  const mapsLocationUrl =
+    typeof latitude === "number" && typeof longitude === "number"
+      ? `https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+          `${business.address}, ${business.city}`
+        )}`;
   const backToBrowseHref = pathname.startsWith("/student")
     ? "/student/browse"
     : pathname.startsWith("/provider")
@@ -661,7 +673,13 @@ export default function BusinessDetailsPage() {
                 <CardTitle>Contact Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-start gap-3">
+                <a
+                  href={mapsLocationUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-start gap-3 rounded-md transition-colors hover:text-primary"
+                  aria-label="Open location in Google Maps"
+                >
                   <MapPin className="h-5 w-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p>{business.address}</p>
@@ -669,7 +687,7 @@ export default function BusinessDetailsPage() {
                       {business.city}
                     </p>
                   </div>
-                </div>
+                </a>
 
                 <div className="flex items-center gap-3">
                   <Phone className="h-5 w-5 text-muted-foreground" />
