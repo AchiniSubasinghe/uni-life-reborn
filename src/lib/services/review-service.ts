@@ -26,6 +26,7 @@ export async function createReview(
   businessId: string,
   businessName: string,
   userId: string,
+  userEmail: string,
   userName: string,
   data: ReviewFormData,
   userRole: UserRole = "student"
@@ -50,6 +51,7 @@ export async function createReview(
     businessId,
     businessName,
     userId,
+    userEmail,
     userName,
     userRole: "student" as const,
     rating: data.rating,
@@ -102,12 +104,85 @@ export async function getReviewsForBusiness(
 export async function getReviewsByUser(userId: string): Promise<Review[]> {
   const q = query(
     collection(db, REVIEWS_COLLECTION),
-    where("userId", "==", userId),
-    orderBy("createdAt", "desc")
+    where("userId", "==", userId)
   );
 
   const snapshot = await getDocs(q);
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Review));
+  const reviews = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Review));
+
+  return reviews.sort((a, b) => {
+    const dateA = a.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    const dateB = b.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    return dateB - dateA;
+  });
+}
+
+export async function getReviewsByStudentIdentity(
+  userId: string,
+  email?: string | null
+): Promise<Review[]> {
+  const normalizedEmail = email?.trim().toLowerCase();
+  const identityCandidates = Array.from(
+    new Set([userId, email ?? undefined, normalizedEmail].filter(Boolean) as string[])
+  );
+  const queries: Promise<Review[]>[] = [];
+
+  for (const candidate of identityCandidates) {
+    queries.push(
+      (async () => {
+        const byUserIdQuery = query(
+          collection(db, REVIEWS_COLLECTION),
+          where("userId", "==", candidate)
+        );
+
+        const byUserIdSnapshot = await getDocs(byUserIdQuery);
+        return byUserIdSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Review));
+      })()
+    );
+  }
+
+  if (email || normalizedEmail) {
+    queries.push(
+      (async () => {
+        const userEmailCandidates = Array.from(
+          new Set([email ?? undefined, normalizedEmail].filter(Boolean) as string[])
+        );
+
+        const snapshots = await Promise.all(
+          userEmailCandidates.map((candidate) =>
+            getDocs(query(collection(db, REVIEWS_COLLECTION), where("userEmail", "==", candidate)))
+          )
+        );
+
+        return snapshots.flatMap((snapshot) =>
+          snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Review))
+        );
+      })()
+    );
+  }
+
+  const settled = await Promise.allSettled(queries);
+  const queryResults = settled
+    .filter((result): result is PromiseFulfilledResult<Review[]> => result.status === "fulfilled")
+    .map((result) => result.value);
+  if (queryResults.length === 0 && settled.some((result) => result.status === "rejected")) {
+    const firstError = settled.find((result) => result.status === "rejected");
+    throw (firstError as PromiseRejectedResult).reason;
+  }
+
+  const mergedById = new Map<string, Review>();
+
+  for (const reviews of queryResults) {
+    for (const review of reviews) {
+      mergedById.set(review.id, review);
+    }
+  }
+
+  return [...mergedById.values()].sort((a, b) => {
+    const dateA = a.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    const dateB = b.createdAt?.toDate?.()?.getTime?.() ?? 0;
+    return dateB - dateA;
+  });
 }
 
 export async function getReviewsForProvider(providerId: string): Promise<Review[]> {
