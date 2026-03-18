@@ -129,6 +129,7 @@ export interface Review {
   businessId: string;
   businessName: string;
   userId: string;
+  userEmail?: string;
   userName: string;
   userRole: "student";
   
