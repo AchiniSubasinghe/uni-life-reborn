@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Business, BusinessCategory } from "@/types";
+import { Business } from "@/types";
 import { cn } from "@/lib/utils";
 import { getCategoryName } from "@/lib/services/category-service";
 
@@ -16,6 +16,7 @@ interface BusinessCardProps {
   isFavorited?: boolean;
   showFavoriteButton?: boolean;
   className?: string;
+  href?: string;
 }
 
 const PRICE_SYMBOLS: Record<number, string> = {
@@ -31,6 +32,7 @@ export function BusinessCard({
   isFavorited = false,
   showFavoriteButton = true,
   className,
+  href,
 }: BusinessCardProps) {
   const [favorited, setFavorited] = useState(isFavorited);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export function BusinessCard({
   };
 
   return (
-    <Link href={`/business/${business.id}`}>
+    <Link href={href || `/business/${business.id}`}>
       <Card
         className={cn(
           "group overflow-hidden transition-all hover:shadow-lg cursor-pointer",
