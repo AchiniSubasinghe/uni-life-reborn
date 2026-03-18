@@ -7,14 +7,12 @@ import { getFavoritesByUser, removeFavorite } from "@/lib/services/favorites-ser
 import { getBusinessById } from "@/lib/services/business-service";
 import { BusinessCard } from "@/components/shared/BusinessCard";
 import { Business, Favorite } from "@/types";
-import { Heart, Loader2, Search, Filter } from "lucide-react";
+import { Heart, Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 
 export default function FavoritesPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [favorites, setFavorites] = useState<(Favorite & { business: Business })[]>([]);
   const [filteredFavorites, setFilteredFavorites] = useState<(Favorite & { business: Business })[]>([]);
   const [loading, setLoading] = useState(true);
@@ -165,9 +163,7 @@ export default function FavoritesPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredFavorites.map(({ id, business }) => (
             <div key={id} className="relative">
-              <div onClick={() => router.push(`/student/businesses/${business.id}`)}>
-                <BusinessCard business={business} />
-              </div>
+              <BusinessCard business={business} href={`/student/businesses/${business.id}`} />
               <Button
                 variant="ghost"
                 size="icon"
