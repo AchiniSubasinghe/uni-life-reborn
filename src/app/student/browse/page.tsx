@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useEffect, useState, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { getAllBusinesses, getApprovedBusinesses, getNearbyBusinesses } from "@/lib/services/business-service";
 import { getFavoritesByUser, toggleFavorite } from "@/lib/services/favorites-service";
@@ -17,7 +17,6 @@ import {
   Filter, 
   Grid3X3, 
   Loader2, 
-  MapPin, 
   SlidersHorizontal,
   Navigation,
   Star,
@@ -26,6 +25,7 @@ import {
 
 function StudentBrowseContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
@@ -147,6 +147,9 @@ function StudentBrowseContent() {
   const handleSearch = (query: string) => {
     setSearchQuery(query);
 
+    const queryString = query.trim() ? `?q=${encodeURIComponent(query.trim())}` : "";
+    router.push(`/student/browse${queryString}`);
+
     if (user?.uid && query.trim()) {
       trackStudentSearch(user.uid, query, selectedCategory || undefined).catch((error) => {
         console.error("Error tracking search:", error);
@@ -180,6 +183,8 @@ function StudentBrowseContent() {
     setSearchQuery("");
     setNearbyOnly(false);
     setRadiusKm(5);
+    setLocationError("");
+    router.push("/student/browse");
   };
 
   const hasActiveFilters = selectedCategory || priceRange || minRating || searchQuery || nearbyOnly;
@@ -189,6 +194,11 @@ function StudentBrowseContent() {
   };
 
   const handleUseCurrentLocation = () => {
+    if (typeof window !== "undefined" && !window.isSecureContext) {
+      setLocationError("Current location needs HTTPS or localhost.");
+      return;
+    }
+
     if (!navigator.geolocation) {
       setLocationError("Geolocation is not supported by your browser.");
       return;
@@ -203,8 +213,25 @@ function StudentBrowseContent() {
         });
         setNearbyOnly(true);
       },
-      () => {
-        setLocationError("Unable to access your location. Please allow location access.");
+      (error) => {
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            setLocationError("Location permission denied. Please allow location access and try again.");
+            break;
+          case error.POSITION_UNAVAILABLE:
+            setLocationError("Your location is currently unavailable. Try again in a few seconds.");
+            break;
+          case error.TIMEOUT:
+            setLocationError("Location request timed out. Please try again.");
+            break;
+          default:
+            setLocationError("Unable to access your location. Please allow location access.");
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
   };
@@ -212,7 +239,7 @@ function StudentBrowseContent() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="glass glass-sheen rounded-2xl p-5 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">Browse Services</h1>
           <p className="text-muted-foreground mt-1">
@@ -243,11 +270,12 @@ function StudentBrowseContent() {
       <SearchBar
         onSearch={handleSearch}
         placeholder="Search for services, restaurants, hostels..."
-        className="max-w-2xl"
+        defaultValue={searchQuery}
+        className="max-w-2xl glass rounded-xl p-2"
       />
 
       {nearbyOnly && (
-        <Card>
+        <Card className="glass glass-sheen border-white/15">
           <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
             <div className="text-sm">
               Showing businesses near your location.
@@ -258,7 +286,7 @@ function StudentBrowseContent() {
                 id="radiusKm"
                 value={radiusKm}
                 onChange={(e) => setRadiusKm(Number(e.target.value))}
-                className="border rounded-lg px-2 py-1 text-sm bg-background"
+                className="border rounded-lg px-2 py-1 text-sm bg-white/[0.06]"
               >
                 <option value={2}>2 km</option>
                 <option value={5}>5 km</option>
@@ -280,7 +308,7 @@ function StudentBrowseContent() {
         {/* Sidebar Filters */}
         <aside className={`lg:w-64 shrink-0 space-y-6 ${showFilters ? "block" : "hidden lg:block"}`}>
           {/* Categories */}
-          <Card>
+          <Card className="glass glass-sheen border-white/15">
             <CardContent className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <Grid3X3 className="h-4 w-4" />
@@ -295,9 +323,9 @@ function StudentBrowseContent() {
                     )}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
                       selectedCategory === category.slug
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    }`}
+                        ? "bg-amber-500/20 border border-amber-400/30 text-amber-200"
+                        : "hover:bg-white/[0.06]"
+                     }`}
                   >
                     <span>{category.icon}</span>
                     <span>{category.name}</span>
@@ -308,7 +336,7 @@ function StudentBrowseContent() {
           </Card>
 
           {/* Price Range */}
-          <Card>
+          <Card className="glass glass-sheen border-white/15">
             <CardContent className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <SlidersHorizontal className="h-4 w-4" />
@@ -321,9 +349,9 @@ function StudentBrowseContent() {
                     onClick={() => setPriceRange(priceRange === price ? null : price)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
                       priceRange === price
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    }`}
+                        ? "bg-amber-500/20 border border-amber-400/30 text-amber-200"
+                        : "hover:bg-white/[0.06]"
+                     }`}
                   >
                     {"$".repeat(price)}
                   </button>
@@ -333,7 +361,7 @@ function StudentBrowseContent() {
           </Card>
 
           {/* Rating Filter */}
-          <Card>
+          <Card className="glass glass-sheen border-white/15">
             <CardContent className="p-4">
               <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <Star className="h-4 w-4" />
@@ -346,9 +374,9 @@ function StudentBrowseContent() {
                     onClick={() => setMinRating(minRating === rating ? null : rating)}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-1 ${
                       minRating === rating
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-muted"
-                    }`}
+                        ? "bg-amber-500/20 border border-amber-400/30 text-amber-200"
+                        : "hover:bg-white/[0.06]"
+                     }`}
                   >
                     {rating}+ <Star className="h-3 w-3 fill-current" />
                   </button>
@@ -373,11 +401,11 @@ function StudentBrowseContent() {
             <p className="text-muted-foreground">
               {loading ? "Loading..." : `${businesses.length} services found`}
             </p>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as "newest" | "rating" | "price")}
-              className="border rounded-lg px-3 py-1.5 text-sm bg-background"
-            >
+             <select
+               value={sortBy}
+               onChange={(e) => setSortBy(e.target.value as "newest" | "rating" | "price")}
+               className="border rounded-lg px-3 py-1.5 text-sm bg-white/[0.06]"
+             >
               <option value="newest">Newest First</option>
               <option value="rating">Highest Rated</option>
               <option value="price">Lowest Price</option>
@@ -428,7 +456,7 @@ function StudentBrowseContent() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : businesses.length === 0 ? (
-            <Card>
+            <Card className="glass glass-sheen border-white/15">
               <CardContent className="p-12 text-center">
                 <div className="bg-muted rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                   <Building2 className="h-8 w-8 text-muted-foreground" />
@@ -448,6 +476,7 @@ function StudentBrowseContent() {
                 <BusinessCard
                   key={business.id}
                   business={business}
+                  href={`/student/businesses/${business.id}`}
                   isFavorited={favoriteIds.has(business.id)}
                   onFavoriteToggle={handleFavoriteToggle}
                 />
