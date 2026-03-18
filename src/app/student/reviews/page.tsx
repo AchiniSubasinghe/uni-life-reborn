@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth-context";
-import { deleteReviewByActor, getReviewsByUser, updateReview } from "@/lib/services/review-service";
+import { deleteReviewByActor, getReviewsByStudentIdentity, updateReview } from "@/lib/services/review-service";
 import { Review } from "@/types";
 import { StarRating } from "@/components/shared/StarRating";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   Calendar,
   AlertCircle
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import Link from "next/link";
 
 export default function StudentReviewsPage() {
@@ -37,7 +37,7 @@ export default function StudentReviewsPage() {
       if (!user) return;
       
       try {
-        const reviewsData = await getReviewsByUser(user.uid);
+        const reviewsData = await getReviewsByStudentIdentity(user.uid, user.email);
         setReviews(reviewsData);
       } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -217,7 +217,7 @@ export default function StudentReviewsPage() {
                       <div>
                         {review.businessId ? (
                           <Link 
-                            href={`/business/${review.businessId}`}
+                            href={`/student/businesses/${review.businessId}`}
                             className="font-semibold text-lg hover:text-primary transition-colors flex items-center gap-2"
                           >
                             {review.businessName}
@@ -230,10 +230,12 @@ export default function StudentReviewsPage() {
                         )}
                         <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                           <Calendar className="h-4 w-4" />
-                          {review.createdAt?.toDate && (
+                          {review.createdAt?.toDate ? (
                             <span>
-                              {formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true })}
+                              {format(review.createdAt.toDate(), "MMM d, yyyy")} ({formatDistanceToNow(review.createdAt.toDate(), { addSuffix: true })})
                             </span>
+                          ) : (
+                            <span>Date unavailable</span>
                           )}
                         </div>
                       </div>
