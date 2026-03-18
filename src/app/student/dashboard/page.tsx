@@ -3,12 +3,12 @@
 import { useEffect, useState } from "react";
 import { Search, Heart, Star, TrendingUp, ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/auth-context";
 import { BusinessCard } from "@/components/shared/BusinessCard";
 import { CategoryCard } from "@/components/shared/CategoryCard";
-import { getAllBusinesses, getApprovedBusinesses, getBusinessById } from "@/lib/services/business-service";
+import { getAllBusinesses, getBusinessById } from "@/lib/services/business-service";
 import { getAllCategories } from "@/lib/services/category-service";
 import { getFavoritesByUser, toggleFavorite } from "@/lib/services/favorites-service";
 import { Business, Category } from "@/types";
@@ -17,6 +17,8 @@ export default function StudentDashboard() {
   const { userData } = useAuth();
   const [recentBusinesses, setRecentBusinesses] = useState<Business[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [totalServices, setTotalServices] = useState(0);
+  const [totalCategories, setTotalCategories] = useState(0);
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
   const [favoriteBusinesses, setFavoriteBusinesses] = useState<Business[]>([]);
@@ -36,21 +38,21 @@ export default function StudentDashboard() {
           userData?.uid ? getFavoritesByUser(userData.uid) : Promise.resolve([]),
         ]);
 
-        let approvedBusinesses: Business[] = [];
-        try {
-          const businessesResult = await getApprovedBusinesses({}, undefined, 6);
-          approvedBusinesses = businessesResult.businesses;
-        } catch {
-          const allBusinesses = await getAllBusinesses();
-          approvedBusinesses = allBusinesses
-            .filter((business) => business.status === "approved" && !business.isBlocked)
-            .slice(0, 6);
-        }
+        const allBusinesses = await getAllBusinesses();
+        const approvedBusinesses = allBusinesses
+          .filter((business) => business.status === "approved" && !business.isBlocked)
+          .sort((a, b) => {
+            const dateA = a.createdAt?.toDate?.()?.getTime?.() ?? 0;
+            const dateB = b.createdAt?.toDate?.()?.getTime?.() ?? 0;
+            return dateB - dateA;
+          });
 
         if (!mounted) return;
 
-        setRecentBusinesses(approvedBusinesses);
+        setRecentBusinesses(approvedBusinesses.slice(0, 6));
         setCategories(categoriesData.slice(0, 8));
+        setTotalServices(approvedBusinesses.length);
+        setTotalCategories(categoriesData.length);
         setFavoriteCount(favoritesData.length);
         setFavoriteIds(new Set(favoritesData.map((fav) => fav.businessId)));
 
@@ -159,7 +161,7 @@ export default function StudentDashboard() {
                 <TrendingUp className="h-5 w-5 text-emerald-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{recentBusinesses.length}+</p>
+                <p className="text-2xl font-bold">{totalServices}</p>
                 <p className="text-sm text-muted-foreground">Services</p>
               </div>
             </div>
@@ -173,7 +175,7 @@ export default function StudentDashboard() {
                 <Star className="h-5 w-5 text-amber-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold">{categories.length}</p>
+                <p className="text-2xl font-bold">{totalCategories}</p>
                 <p className="text-sm text-muted-foreground">Categories</p>
               </div>
             </div>
@@ -236,6 +238,7 @@ export default function StudentDashboard() {
               <BusinessCard
                 key={business.id}
                 business={business}
+                href={`/student/businesses/${business.id}`}
                 showFavoriteButton={true}
                 onFavoriteToggle={handleFavoriteToggle}
                 isFavorited={favoriteIds.has(business.id)}
@@ -268,6 +271,7 @@ export default function StudentDashboard() {
               <BusinessCard
                 key={business.id}
                 business={business}
+                href={`/student/businesses/${business.id}`}
                 onFavoriteToggle={handleFavoriteToggle}
                 isFavorited={favoriteIds.has(business.id)}
                 showFavoriteButton={true}
