@@ -248,8 +248,17 @@ export async function getNearbyBusinesses(
       return false;
     }
 
-    const lat = business.location.latitude;
-    const lon = business.location.longitude;
+    const legacyLocationBusiness = business as Business & {
+      latitude?: number;
+      longitude?: number;
+    };
+
+    const lat = business.location?.latitude ?? legacyLocationBusiness.latitude;
+    const lon = business.location?.longitude ?? legacyLocationBusiness.longitude;
+
+    if (typeof lat !== "number" || typeof lon !== "number") {
+      return false;
+    }
     
     if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon) {
       return false;
