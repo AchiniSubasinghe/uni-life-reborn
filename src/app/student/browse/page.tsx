@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback, type ElementType } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/auth-context";
 import { getAllBusinesses, getApprovedBusinesses, getNearbyBusinesses } from "@/lib/services/business-service";
@@ -14,14 +14,41 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { 
   Building2, 
+  BookOpen,
+  Coffee,
+  Dumbbell,
   Filter, 
   Grid3X3, 
   Loader2, 
+  MoreHorizontal,
   SlidersHorizontal,
   Navigation,
+  Pill,
+  Shirt,
+  ShoppingCart,
   Star,
+  UtensilsCrossed,
   X 
 } from "lucide-react";
+
+const categoryIconMap: Record<string, ElementType> = {
+  Building2,
+  UtensilsCrossed,
+  ShoppingCart,
+  Pill,
+  Shirt,
+  BookOpen,
+  Dumbbell,
+  Coffee,
+  MoreHorizontal,
+};
+
+const HOSTEL_PRICE_FILTER_OPTIONS: Array<{ value: 1 | 2 | 3 | 4; label: string }> = [
+  { value: 1, label: "Less than 10,000" },
+  { value: 2, label: "10,000 - 15,000" },
+  { value: 3, label: "15,000 - 20,000" },
+  { value: 4, label: "Above 20,000" },
+];
 
 function StudentBrowseContent() {
   const searchParams = useSearchParams();
@@ -40,6 +67,12 @@ function StudentBrowseContent() {
   const [nearbyOnly, setNearbyOnly] = useState(false);
   const [radiusKm, setRadiusKm] = useState<number>(5);
   const [locationError, setLocationError] = useState<string>("");
+
+  useEffect(() => {
+    if (selectedCategory !== "hostel" && priceRange !== null) {
+      setPriceRange(null);
+    }
+  }, [selectedCategory, priceRange]);
 
   useEffect(() => {
     const categoryParam = searchParams.get("category") as BusinessCategory | null;
@@ -315,50 +348,56 @@ function StudentBrowseContent() {
                 Categories
               </h3>
               <div className="space-y-2">
-                {DEFAULT_CATEGORIES.map((category) => (
-                  <button
-                    key={category.slug}
-                    onClick={() => setSelectedCategory(
-                      selectedCategory === category.slug ? null : category.slug as BusinessCategory
-                    )}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
-                      selectedCategory === category.slug
-                        ? "bg-amber-500/20 border border-amber-400/30 text-amber-200"
-                        : "hover:bg-white/[0.06]"
-                     }`}
-                  >
-                    <span>{category.icon}</span>
-                    <span>{category.name}</span>
-                  </button>
-                ))}
+                {DEFAULT_CATEGORIES.map((category) => {
+                  const CategoryIcon = categoryIconMap[category.icon] || MoreHorizontal;
+
+                  return (
+                    <button
+                      key={category.slug}
+                      onClick={() => setSelectedCategory(
+                        selectedCategory === category.slug ? null : category.slug as BusinessCategory
+                      )}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2 ${
+                        selectedCategory === category.slug
+                          ? "bg-amber-500/20 border border-amber-400/30 text-amber-200"
+                          : "hover:bg-white/[0.06]"
+                       }`}
+                    >
+                      <CategoryIcon className="h-4 w-4" />
+                      <span>{category.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
 
           {/* Price Range */}
-          <Card className="glass glass-sheen border-white/15">
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-3 flex items-center gap-2">
-                <SlidersHorizontal className="h-4 w-4" />
-                Price Range
-              </h3>
-              <div className="space-y-2">
-                {[1, 2, 3, 4].map((price) => (
-                  <button
-                    key={price}
-                    onClick={() => setPriceRange(priceRange === price ? null : price)}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                      priceRange === price
-                        ? "bg-amber-500/20 border border-amber-400/30 text-amber-200"
-                        : "hover:bg-white/[0.06]"
-                     }`}
-                  >
-                    {"$".repeat(price)}
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
+          {selectedCategory === "hostel" && (
+            <Card className="glass glass-sheen border-white/15">
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  Hostel Price Range
+                </h3>
+                <div className="space-y-2">
+                  {HOSTEL_PRICE_FILTER_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setPriceRange(priceRange === option.value ? null : option.value)}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        priceRange === option.value
+                          ? "bg-amber-500/20 border border-amber-400/30 text-amber-200"
+                          : "hover:bg-white/[0.06]"
+                       }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Rating Filter */}
           <Card className="glass glass-sheen border-white/15">
@@ -425,7 +464,7 @@ function StudentBrowseContent() {
               )}
               {selectedCategory && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/15 border border-amber-400/20 text-amber-300 rounded-full text-sm">
-                  {getCategoryInfo(selectedCategory)?.icon} {getCategoryInfo(selectedCategory)?.name}
+                  {getCategoryInfo(selectedCategory)?.name}
                   <button onClick={() => setSelectedCategory(null)}>
                     <X className="h-3 w-3" />
                   </button>
@@ -433,7 +472,7 @@ function StudentBrowseContent() {
               )}
               {priceRange && (
                 <span className="inline-flex items-center gap-1 px-3 py-1 bg-amber-500/15 border border-amber-400/20 text-amber-300 rounded-full text-sm">
-                  {"$".repeat(priceRange)}
+                  {HOSTEL_PRICE_FILTER_OPTIONS.find((option) => option.value === priceRange)?.label || "Price"}
                   <button onClick={() => setPriceRange(null)}>
                     <X className="h-3 w-3" />
                   </button>

@@ -68,6 +68,14 @@ export default function BusinessDetailsPage() {
   const [newPostImage, setNewPostImage] = useState<File | undefined>(undefined);
   const [creatingPost, setCreatingPost] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+
+  const getBackToBrowseHref = () => {
+    if (pathname.startsWith("/student")) return "/student/browse";
+    if (pathname.startsWith("/provider")) return "/provider/dashboard";
+    if (pathname.startsWith("/admin")) return "/admin/businesses";
+    return "/browse";
+  };
 
   useEffect(() => {
     if (authLoading) return;
@@ -272,6 +280,41 @@ export default function BusinessDetailsPage() {
     }
   };
 
+  const handleShare = async () => {
+    if (!business || typeof window === "undefined") return;
+
+    const shareUrl = window.location.href;
+    const shareTitle = business.name;
+    const shareText = `Check out ${business.name} on UniLife`;
+
+    setSharing(true);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        return;
+      }
+
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+        alert("Business link copied to clipboard.");
+      } else {
+        window.prompt("Copy this business link:", shareUrl);
+      }
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+      console.error("Share action failed:", error);
+      window.prompt("Copy this business link:", shareUrl);
+    } finally {
+      setSharing(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -291,7 +334,7 @@ export default function BusinessDetailsPage() {
         <p className="text-muted-foreground mt-2">
           The business you're looking for doesn't exist or has been removed.
         </p>
-        <Link href={pathname.startsWith("/student") ? "/student/browse" : "/browse"}>
+        <Link href={getBackToBrowseHref()}>
           <Button className="mt-4">Browse Services</Button>
         </Link>
       </div>
@@ -314,13 +357,7 @@ export default function BusinessDetailsPage() {
       : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
           `${business.address}, ${business.city}`
         )}`;
-  const backToBrowseHref = pathname.startsWith("/student")
-    ? "/student/browse"
-    : pathname.startsWith("/provider")
-    ? "/provider/businesses"
-    : pathname.startsWith("/admin")
-    ? "/admin/businesses"
-    : "/browse";
+  const backToBrowseHref = getBackToBrowseHref();
 
   return (
     <div className="min-h-screen bg-background">
@@ -335,7 +372,7 @@ export default function BusinessDetailsPage() {
             <Button variant="outline" size="icon" onClick={handleFavoriteToggle}>
               <Heart className={cn("h-4 w-4", isFavorite && "fill-red-500 text-red-500")} />
             </Button>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" onClick={handleShare} disabled={sharing}>
               <Share2 className="h-4 w-4" />
             </Button>
           </div>
@@ -668,7 +705,7 @@ export default function BusinessDetailsPage() {
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Contact Card */}
-            <Card className="sticky top-24">
+            <Card>
               <CardHeader>
                 <CardTitle>Contact Information</CardTitle>
               </CardHeader>

@@ -43,6 +43,13 @@ const AMENITY_OPTIONS = [
   "Reservation Required",
 ];
 
+const HOSTEL_PRICE_OPTIONS: Array<{ value: 1 | 2 | 3 | 4; label: string }> = [
+  { value: 1, label: "Less than 10,000" },
+  { value: 2, label: "10,000 - 15,000" },
+  { value: 3, label: "15,000 - 20,000" },
+  { value: 4, label: "Above 20,000" },
+];
+
 export default function NewBusinessPage() {
   const router = useRouter();
   const { user, userData } = useAuth();
@@ -231,27 +238,26 @@ export default function NewBusinessPage() {
               {errors.description && <FieldError>{errors.description}</FieldError>}
             </Field>
 
-            <Field>
-              <FieldLabel>Price Range *</FieldLabel>
-              <div className="flex gap-2">
-                {[1, 2, 3, 4].map((price) => (
-                  <Button
-                    key={price}
-                    type="button"
-                    variant={formData.priceRange === price ? "default" : "outline"}
-                    onClick={() => handleChange("priceRange", price)}
-                  >
-                    {"$".repeat(price)}
-                  </Button>
-                ))}
-              </div>
-              <FieldDescription>
-                {formData.priceRange === 1 && "Budget-friendly"}
-                {formData.priceRange === 2 && "Moderate pricing"}
-                {formData.priceRange === 3 && "Upscale pricing"}
-                {formData.priceRange === 4 && "Premium pricing"}
-              </FieldDescription>
-            </Field>
+            {formData.category === "hostel" && (
+              <Field>
+                <FieldLabel htmlFor="hostel-price-range">Price Range *</FieldLabel>
+                <select
+                  id="hostel-price-range"
+                  value={formData.priceRange}
+                  onChange={(e) => handleChange("priceRange", Number(e.target.value) as 1 | 2 | 3 | 4)}
+                  className="w-full h-9 px-3 rounded-md border bg-background"
+                >
+                  {HOSTEL_PRICE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+                <FieldDescription>
+                  Select the monthly hostel price range for students.
+                </FieldDescription>
+              </Field>
+            )}
           </CardContent>
         </Card>
 
