@@ -10,20 +10,21 @@ import {
 import { Input } from "@/components/ui/input"
 import { auth, db } from "@/config/firebase.config"
 import {
+  FacebookAuthProvider,
   getRedirectResult,
   GoogleAuthProvider,
-  OAuthProvider,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   User,
 } from "firebase/auth";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { doc, getDoc } from "firebase/firestore";
 import Cookies from "js-cookie";
 
 type UserRole = "student" | "provider" | "admin";
+type FirebaseAuthError = { code?: string; message?: string };
 
 async function getUserRole(uid: string): Promise<UserRole | null> {
   // Check unified users collection first
@@ -60,8 +61,10 @@ function getDashboardUrl(role: UserRole): string {
   }
 }
 
-function getAuthErrorMessage(error: any): string {
-  switch (error?.code) {
+function getAuthErrorMessage(error: unknown): string {
+  const authError = error as FirebaseAuthError;
+
+  switch (authError.code) {
     case "auth/invalid-email":
       return "Please enter a valid email address.";
     case "auth/user-not-found":
@@ -77,7 +80,7 @@ function getAuthErrorMessage(error: any): string {
     case "auth/operation-not-allowed":
       return "This sign-in method is not enabled in Firebase Authentication settings.";
     default:
-      return error?.message || "Authentication failed. Please try again.";
+      return authError.message || "Authentication failed. Please try again.";
   }
 }
 
@@ -93,7 +96,7 @@ export function LoginForm({
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
-  const completeSocialLogin = async (firebaseUser: User, signupProvider: "google" | "apple") => {
+  const completeSocialLogin = useCallback(async (firebaseUser: User, signupProvider: "google" | "facebook") => {
     const role = await getUserRole(firebaseUser.uid);
 
     if (!role) {
@@ -106,7 +109,7 @@ export function LoginForm({
     Cookies.set("user-role", role, { expires: 7 });
 
     router.push(getDashboardUrl(role));
-  };
+  }, [router]);
 
   useEffect(() => {
     const resolveRedirectSignIn = async () => {
@@ -117,16 +120,16 @@ export function LoginForm({
         const providerId = redirectResult.providerId;
         if (providerId === "google.com") {
           await completeSocialLogin(redirectResult.user, "google");
-        } else if (providerId === "apple.com") {
-          await completeSocialLogin(redirectResult.user, "apple");
+        } else if (providerId === "facebook.com") {
+          await completeSocialLogin(redirectResult.user, "facebook");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         setError(getAuthErrorMessage(err));
       }
     };
 
     resolveRedirectSignIn();
-  }, []);
+  }, [completeSocialLogin]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,9 +160,10 @@ export function LoginForm({
       const dashboardUrl = getDashboardUrl(role);
       router.push(dashboardUrl);
 
-    } catch (error: any) {
-      console.error(error.message);
-      setError(error.message || "Login failed. Please try again.");
+    } catch (error: unknown) {
+      const authError = error as FirebaseAuthError;
+      console.error(authError.message);
+      setError(authError.message || "Login failed. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -177,46 +181,62 @@ export function LoginForm({
 
       const result = await signInWithPopup(auth, provider);
       await completeSocialLogin(result.user, "google");
-    } catch (error: any) {
-      if (error.code === "auth/popup-blocked" || error.code === "auth/web-storage-unsupported") {
+    } catch (error: unknown) {
+      const authError = error as FirebaseAuthError;
+
+      if (authError.code === "auth/popup-blocked" || authError.code === "auth/web-storage-unsupported") {
         try {
           const provider = new GoogleAuthProvider();
           provider.setCustomParameters({ prompt: "select_account" });
           setInfo("Using redirect sign-in because popup was blocked...");
           await signInWithRedirect(auth, provider);
           return;
-        } catch (redirectError: any) {
+        } catch (redirectError: unknown) {
           setError(getAuthErrorMessage(redirectError));
           return;
         }
       }
 
-      if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
-        console.error(error.message);
-        setError(getAuthErrorMessage(error));
+      if (authError.code !== "auth/cancelled-popup-request" && authError.code !== "auth/popup-closed-by-user") {
+        console.error(authError.message);
+        setError(getAuthErrorMessage(authError));
       }
     } finally {
       setPopupLoading(false);
     }
   };
 
-  const handleAppleLogin = async () => {
+  const handleFacebookLogin = async () => {
     if (popupLoading) return;
     setPopupLoading(true);
     setError("");
     setInfo("");
 
     try {
-      const provider = new OAuthProvider("apple.com");
+      const provider = new FacebookAuthProvider();
       provider.addScope("email");
-      provider.addScope("name");
 
       const result = await signInWithPopup(auth, provider);
-      await completeSocialLogin(result.user, "apple");
-    } catch (error: any) {
-      if (error.code !== "auth/cancelled-popup-request" && error.code !== "auth/popup-closed-by-user") {
-        console.error(error.message);
-        setError(getAuthErrorMessage(error));
+      await completeSocialLogin(result.user, "facebook");
+    } catch (error: unknown) {
+      const authError = error as FirebaseAuthError;
+
+      if (authError.code === "auth/popup-blocked" || authError.code === "auth/web-storage-unsupported") {
+        try {
+          const provider = new FacebookAuthProvider();
+          provider.addScope("email");
+          setInfo("Using redirect sign-in because popup was blocked...");
+          await signInWithRedirect(auth, provider);
+          return;
+        } catch (redirectError: unknown) {
+          setError(getAuthErrorMessage(redirectError));
+          return;
+        }
+      }
+
+      if (authError.code !== "auth/cancelled-popup-request" && authError.code !== "auth/popup-closed-by-user") {
+        console.error(authError.message);
+        setError(getAuthErrorMessage(authError));
       }
     } finally {
       setPopupLoading(false);
@@ -261,15 +281,15 @@ export function LoginForm({
             </button>
             <button
               type="button"
-              onClick={handleAppleLogin}
+              onClick={handleFacebookLogin}
               disabled={popupLoading}
               className="relative flex items-center justify-center gap-3 w-full h-11 rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all duration-200 hover:bg-white/[0.07] disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
               <svg className="size-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="currentColor" />
+                <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073c0 6.019 4.388 11.009 10.125 11.927v-8.437H7.078v-3.49h3.047V9.413c0-3.017 1.792-4.685 4.533-4.685 1.313 0 2.686.236 2.686.236v2.963h-1.514c-1.492 0-1.956.931-1.956 1.887v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.082 24 18.092 24 12.073z" fill="currentColor" />
               </svg>
-              Continue with Apple
+              Continue with Facebook
             </button>
           </div>
 
