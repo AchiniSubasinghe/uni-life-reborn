@@ -5,6 +5,7 @@ import {
   Activity,
   BarChart3,
   Building2,
+  GraduationCap,
   PieChart as PieChartIcon,
   TrendingUp,
   Users,
@@ -27,10 +28,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAllBusinesses } from "@/lib/services/business-service";
 import { getAllUsers } from "@/lib/services/user-service";
-import {
-  getBusinessRegistrationsByMonth,
-  getMostSearchedCategories,
-} from "@/lib/services/analytics-service";
+import { getBusinessRegistrationsByMonth } from "@/lib/services/analytics-service";
 import { Business } from "@/types";
 
 type RegistrationPoint = {
@@ -42,21 +40,20 @@ const PIE_COLORS = ["#f59e0b", "#10b981", "#06b6d4", "#f97316", "#6366f1", "#ef4
 
 export default function AdminAnalyticsPage() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [searchCategories, setSearchCategories] = useState<Array<{ category: string; count: number }>>([]);
+  const [users, setUsers] = useState<Array<{ role?: string; university?: string }>>([]);
   const [totalUsers, setTotalUsers] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
-        const [businessesData, searchData, usersData] = await Promise.all([
+        const [businessesData, usersData] = await Promise.all([
           getAllBusinesses(),
-          getMostSearchedCategories(60),
           getAllUsers(),
         ]);
 
         setBusinesses(businessesData);
-        setSearchCategories(searchData);
+        setUsers(usersData);
         setTotalUsers(usersData.length);
       } catch (error) {
         console.error("Error loading analytics:", error);
@@ -112,6 +109,26 @@ export default function AdminAnalyticsPage() {
       trendThisMonth,
     };
   }, [businesses, registrations, totalUsers]);
+
+  const topUniversitiesData = useMemo(() => {
+    const universityCounts = new Map<string, number>();
+
+    users
+      .filter((user) => user.role === "student")
+      .forEach((student) => {
+        const university = student.university?.trim();
+        if (!university) {
+          return;
+        }
+
+        universityCounts.set(university, (universityCounts.get(university) || 0) + 1);
+      });
+
+    return Array.from(universityCounts.entries())
+      .map(([university, students]) => ({ university, students }))
+      .sort((a, b) => b.students - a.students)
+      .slice(0, 8);
+  }, [users]);
 
   if (loading) {
     return <div className="p-6">Loading analytics...</div>;
@@ -283,26 +300,27 @@ export default function AdminAnalyticsPage() {
         <Card className="border-white/20 bg-white/10 backdrop-blur-md">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Activity className="h-5 w-5" />
-              Most Searched Categories (60 Days)
+              <GraduationCap className="h-5 w-5" />
+              Top Universities by Registered Students
             </CardTitle>
           </CardHeader>
           <CardContent className="h-[320px]">
-            {searchCategories.length === 0 ? (
+            {topUniversitiesData.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No search analytics yet. Student searches will appear here.
+                No university data available yet.
               </p>
             ) : (
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={searchCategories.map((item) => ({
-                  category: item.category,
-                  searches: item.count,
-                }))} layout="vertical" margin={{ top: 8, right: 16, left: 16, bottom: 8 }}>
+                <BarChart
+                  data={topUniversitiesData}
+                  layout="vertical"
+                  margin={{ top: 8, right: 16, left: 16, bottom: 8 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
                   <XAxis type="number" stroke="#9ca3af" allowDecimals={false} />
-                  <YAxis type="category" dataKey="category" stroke="#9ca3af" width={96} />
+                  <YAxis type="category" dataKey="university" stroke="#9ca3af" width={132} />
                   <Tooltip />
-                  <Bar dataKey="searches" fill="#f97316" radius={[0, 6, 6, 0]} />
+                  <Bar dataKey="students" fill="#f97316" radius={[0, 6, 6, 0]} name="Students" />
                 </BarChart>
               </ResponsiveContainer>
             )}
