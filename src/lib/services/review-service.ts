@@ -16,6 +16,8 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import { db, storage } from "@/config/firebase.config";
 import { Review, ReviewFormData, UserRole } from "@/types";
 import { updateBusinessRating, getBusinessById, getBusinessesByProvider } from "./business-service";
+import { notifyAdmins, notifyProviders, notifyStudentById } from "./notification-service";
+import { getPlatformSettings } from "./settings-service";
 
 const REVIEWS_COLLECTION = "reviews";
 
@@ -47,6 +49,9 @@ export async function createReview(
     imageUrls = await uploadReviewImages(data.images, userId, businessId);
   }
 
+  const platformSettings = await getPlatformSettings();
+  const isVisible = !platformSettings.reviewModeration;
+
   const reviewData = {
     businessId,
     businessName,
@@ -57,12 +62,47 @@ export async function createReview(
     rating: data.rating,
     comment: data.comment,
     images: imageUrls,
-    isVisible: true,
+    isVisible,
     isReported: false,
     createdAt: serverTimestamp(),
   };
 
   const docRef = await addDoc(collection(db, REVIEWS_COLLECTION), reviewData);
+
+  const business = await getBusinessById(businessId);
+  if (business) {
+    await Promise.allSettled([
+      notifyProviders(
+        "newReviews",
+        {
+          title: "New customer review",
+          message: `${userName} left a ${data.rating}-star review for ${business.name}.`,
+          eventType: "review.created",
+          metadata: {
+            reviewId: docRef.id,
+            businessId,
+            businessName: business.name,
+            studentId: userId,
+          },
+        },
+        business.providerId
+      ),
+      notifyAdmins("dailyDigest", {
+        title: isVisible ? "New review posted" : "Review pending moderation",
+        message: isVisible
+          ? `A new review was posted for ${business.name}.`
+          : `A new review for ${business.name} is waiting for moderation.`,
+        eventType: "review.created",
+        metadata: {
+          reviewId: docRef.id,
+          businessId,
+          businessName: business.name,
+          studentId: userId,
+          reviewModerationEnabled: platformSettings.reviewModeration,
+        },
+      }),
+    ]);
+  }
 
   // Update business rating
   await recalculateBusinessRating(businessId);
@@ -252,7 +292,7 @@ export async function updateReview(
   reviewId: string,
   data: Partial<ReviewFormData>
 ): Promise<void> {
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     ...data,
     updatedAt: serverTimestamp(),
   };
@@ -275,6 +315,8 @@ export async function addProviderResponse(
   reviewId: string,
   comment: string
 ): Promise<void> {
+  const review = await getReviewById(reviewId);
+
   await updateDoc(doc(db, REVIEWS_COLLECTION, reviewId), {
     providerResponse: {
       comment,
@@ -282,17 +324,46 @@ export async function addProviderResponse(
     },
     updatedAt: serverTimestamp(),
   });
+
+  if (review) {
+    await notifyStudentById(review.userId, "reviewResponses", {
+      title: "Provider responded to your review",
+      message: `A provider responded to your review for ${review.businessName}.`,
+      eventType: "review.response",
+      metadata: {
+        reviewId,
+        businessId: review.businessId,
+        businessName: review.businessName,
+      },
+    });
+  }
 }
 
 export async function reportReview(
   reviewId: string,
   reason: string
 ): Promise<void> {
+  const review = await getReviewById(reviewId);
+
   await updateDoc(doc(db, REVIEWS_COLLECTION, reviewId), {
     isReported: true,
     reportReason: reason,
     updatedAt: serverTimestamp(),
   });
+
+  if (review) {
+    await notifyAdmins("reportedReviews", {
+      title: "Review reported",
+      message: `A review for ${review.businessName} was reported.`,
+      eventType: "review.reported",
+      metadata: {
+        reviewId,
+        businessId: review.businessId,
+        businessName: review.businessName,
+        reason,
+      },
+    });
+  }
 }
 
 export async function toggleReviewVisibility(
