@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { ChangeEvent, useState, useEffect } from "react";
+import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
-import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { updateEmail, updatePassword, updateProfile, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import {
   getAdminSettings,
@@ -10,6 +11,7 @@ import {
   saveAdminNotifications,
   saveAdminProfile,
   savePlatformSettings,
+  uploadProfileImage,
 } from "@/lib/services/settings-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +22,6 @@ import {
   User, 
   Lock, 
   Bell, 
-  Shield,
   Loader2, 
   Save,
   CheckCircle,
@@ -32,6 +33,7 @@ interface AdminProfile {
   firstName: string;
   lastName: string;
   email: string;
+  photoURL: string;
 }
 
 interface PlatformSettings {
@@ -42,9 +44,10 @@ interface PlatformSettings {
 }
 
 export default function AdminSettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   
@@ -52,6 +55,7 @@ export default function AdminSettingsPage() {
     firstName: "",
     lastName: "",
     email: "",
+    photoURL: "",
   });
   
   const [passwordData, setPasswordData] = useState({
@@ -89,6 +93,7 @@ export default function AdminSettingsPage() {
           firstName: adminSettings.firstName,
           lastName: adminSettings.lastName,
           email: adminSettings.email,
+          photoURL: adminSettings.photoURL,
         });
         setNotifications(adminSettings.notifications);
         setPlatformSettings(platformSettingsData);
@@ -112,14 +117,63 @@ export default function AdminSettingsPage() {
       await saveAdminProfile(user.uid, {
         firstName: profile.firstName,
         lastName: profile.lastName,
+        email: profile.email,
+        photoURL: profile.photoURL,
       });
-      
+
+      if (auth.currentUser) {
+        if (auth.currentUser.email !== profile.email.trim()) {
+          await updateEmail(auth.currentUser, profile.email.trim());
+        }
+
+        await updateProfile(auth.currentUser, {
+          displayName: `${profile.firstName} ${profile.lastName}`.trim(),
+          photoURL: profile.photoURL || null,
+        });
+      }
+
+      await refreshUserData();
+
       setMessage({ type: "success", text: "Profile updated successfully!" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving profile:", error);
+      if ((error as { code?: string })?.code === "auth/requires-recent-login") {
+        setMessage({ type: "error", text: "Please sign in again before changing your email." });
+        return;
+      }
       setMessage({ type: "error", text: "Failed to save profile. Please try again." });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleProfileImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please select an image file." });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Image size must be less than 5MB." });
+      return;
+    }
+
+    setUploadingImage(true);
+    setMessage(null);
+
+    try {
+      const imageUrl = await uploadProfileImage(user.uid, file);
+      setProfile((prev) => ({ ...prev, photoURL: imageUrl }));
+      setMessage({ type: "success", text: "Profile picture uploaded. Click Save Changes to apply." });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      setMessage({ type: "error", text: "Failed to upload profile image. Please try again." });
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
     }
   };
 
@@ -241,6 +295,33 @@ export default function AdminSettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <div className="flex items-center gap-4 rounded-xl p-4 border border-border/60 bg-muted/20">
+            {profile.photoURL ? (
+              <Image
+                src={profile.photoURL}
+                alt="Profile"
+                className="h-16 w-16 rounded-full object-cover border border-border"
+                width={64}
+                height={64}
+              />
+            ) : (
+              <div className="h-16 w-16 rounded-full border border-border bg-muted flex items-center justify-center text-lg font-semibold">
+                {(profile.firstName?.[0] || "A").toUpperCase()}
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="adminProfileImage">Profile Picture</Label>
+              <Input
+                id="adminProfileImage"
+                type="file"
+                accept="image/*"
+                onChange={handleProfileImageUpload}
+                disabled={uploadingImage}
+              />
+              <p className="text-xs text-muted-foreground">JPG, PNG or WEBP. Max size 5MB.</p>
+            </div>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name</Label>
@@ -266,12 +347,12 @@ export default function AdminSettingsPage() {
               id="email"
               type="email"
               value={profile.email}
-              disabled
-              className="bg-muted"
+              onChange={(e) => setProfile({ ...profile, email: e.target.value })}
             />
+            <p className="text-xs text-muted-foreground">Changing email may require a recent login.</p>
           </div>
-          
-          <Button onClick={handleSaveProfile} disabled={saving}>
+
+          <Button onClick={handleSaveProfile} disabled={saving || uploadingImage}>
             {saving ? (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             ) : (
