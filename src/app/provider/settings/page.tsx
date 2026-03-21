@@ -1,57 +1,85 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { ChangeEvent, useState, useEffect } from "react";
+import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { updateEmail, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
+import {
+  getBusinessesByProvider,
+} from "@/lib/services/business-service";
+import {
+  type Business,
+  type BusinessStatus,
+} from "@/types";
 import {
   getProviderSettings,
   saveProviderNotifications,
   saveProviderProfile,
+  uploadProfileImage,
 } from "@/lib/services/settings-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import {
-  User,
   Lock,
   Bell,
-  Building2,
+  User,
   Loader2,
   Save,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Store,
+  CheckCircle2,
+  Clock,
+  XCircle,
 } from "lucide-react";
 
 interface ProviderProfile {
-  businessName: string;
-  ownerName: string;
+  firstName: string;
+  lastName: string;
+  nic: string;
   email: string;
+  photoURL: string;
   phone: string;
-  address: string;
-  description: string;
-  website: string;
 }
 
+const statusConfig: Record<BusinessStatus, { label: string; icon: React.ElementType; className: string }> = {
+  approved: {
+    label: "Approved",
+    icon: CheckCircle2,
+    className: "bg-emerald-500/15 border border-emerald-400/20 text-emerald-300",
+  },
+  pending: {
+    label: "Pending",
+    icon: Clock,
+    className: "bg-amber-500/15 border border-amber-400/20 text-amber-300",
+  },
+  rejected: {
+    label: "Rejected",
+    icon: XCircle,
+    className: "bg-red-500/15 border border-red-400/20 text-red-300",
+  },
+};
+
 export default function ProviderSettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   const [profile, setProfile] = useState<ProviderProfile>({
-    businessName: "",
-    ownerName: "",
+    firstName: "",
+    lastName: "",
+    nic: "",
     email: "",
+    photoURL: "",
     phone: "",
-    address: "",
-    description: "",
-    website: "",
   });
+  const [businesses, setBusinesses] = useState<Business[]>([]);
 
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -71,16 +99,19 @@ export default function ProviderSettingsPage() {
       if (!user) return;
 
       try {
-        const data = await getProviderSettings(user.uid, user.email || "");
+        const [data, businessList] = await Promise.all([
+          getProviderSettings(user.uid, user.email || ""),
+          getBusinessesByProvider(user.uid),
+        ]);
         setProfile({
-          businessName: data.businessName,
-          ownerName: data.ownerName,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          nic: data.nic,
           email: data.email,
+          photoURL: data.photoURL,
           phone: data.phone,
-          address: data.address,
-          description: data.description,
-          website: data.website,
         });
+        setBusinesses(businessList);
         setNotifications(data.notifications);
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -100,27 +131,68 @@ export default function ProviderSettingsPage() {
 
     try {
       await saveProviderProfile(user.uid, {
-        businessName: profile.businessName,
-        ownerName: profile.ownerName,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        nic: profile.nic,
+        email: profile.email,
+        photoURL: profile.photoURL,
         phone: profile.phone,
-        address: profile.address,
-        description: profile.description,
-        website: profile.website,
       });
 
       // Update Firebase Auth profile
       if (auth.currentUser) {
+        if (auth.currentUser.email !== profile.email.trim()) {
+          await updateEmail(auth.currentUser, profile.email.trim());
+        }
+
         await updateProfile(auth.currentUser, {
-          displayName: profile.ownerName,
+          displayName: `${profile.firstName} ${profile.lastName}`.trim(),
+          photoURL: profile.photoURL || null,
         });
       }
 
+      await refreshUserData();
+
       setMessage({ type: "success", text: "Profile updated successfully!" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving profile:", error);
+      if ((error as { code?: string })?.code === "auth/requires-recent-login") {
+        setMessage({ type: "error", text: "Please sign in again before changing your email." });
+        return;
+      }
       setMessage({ type: "error", text: "Failed to save profile. Please try again." });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleProfileImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please select an image file." });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Image size must be less than 5MB." });
+      return;
+    }
+
+    setUploadingImage(true);
+    setMessage(null);
+
+    try {
+      const imageUrl = await uploadProfileImage(user.uid, file);
+      setProfile((prev) => ({ ...prev, photoURL: imageUrl }));
+      setMessage({ type: "success", text: "Profile picture uploaded. Click Save Changes to apply." });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      setMessage({ type: "error", text: "Failed to upload profile image. Please try again." });
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
     }
   };
 
@@ -207,56 +279,74 @@ export default function ProviderSettingsPage() {
         </div>
       )}
 
-      {/* Business Profile + Password — 2 col on lg */}
+      {/* Profile Information + Password — 2 col on lg */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-        {/* Business Profile */}
+        {/* Profile Information */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="h-5 w-5" />
-              Business Profile
+              <User className="h-5 w-5" />
+              Profile Information
             </CardTitle>
-            <CardDescription>Update your business information</CardDescription>
+            <CardDescription>Update your account information</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Business Name</Label>
-              <Input id="businessName" value={profile.businessName} onChange={(e) => setProfile({ ...profile, businessName: e.target.value })} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="ownerName">Owner Name</Label>
-              <Input id="ownerName" value={profile.ownerName} onChange={(e) => setProfile({ ...profile, ownerName: e.target.value })} />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={profile.email} disabled className="opacity-50 cursor-not-allowed" />
-              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+            <div className="flex items-center gap-4 rounded-xl p-4 border border-border/60 bg-muted/20">
+              {profile.photoURL ? (
+                <Image
+                  src={profile.photoURL}
+                  alt="Profile"
+                  className="h-16 w-16 rounded-full object-cover border border-border"
+                  width={64}
+                  height={64}
+                />
+                ) : (
+                  <div className="h-16 w-16 rounded-full border border-border bg-muted flex items-center justify-center text-lg font-semibold">
+                    {(profile.firstName?.[0] || "U").toUpperCase()}
+                  </div>
+                )}
+              <div className="space-y-2">
+                <Label htmlFor="providerProfileImage">Profile Picture</Label>
+                <Input
+                  id="providerProfileImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageUpload}
+                  disabled={uploadingImage}
+                />
+                <p className="text-xs text-muted-foreground">JPG, PNG or WEBP. Max size 5MB.</p>
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="+94 71 234 5678" />
+                <Label htmlFor="firstName">First Name</Label>
+                <Input id="firstName" value={profile.firstName} onChange={(e) => setProfile({ ...profile, firstName: e.target.value })} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="website">Website</Label>
-                <Input id="website" type="url" value={profile.website} onChange={(e) => setProfile({ ...profile, website: e.target.value })} placeholder="https://" />
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input id="lastName" value={profile.lastName} onChange={(e) => setProfile({ ...profile, lastName: e.target.value })} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input id="address" value={profile.address} onChange={(e) => setProfile({ ...profile, address: e.target.value })} />
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+              <p className="text-xs text-muted-foreground">Changing email may require a recent login.</p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea id="description" value={profile.description} onChange={(e) => setProfile({ ...profile, description: e.target.value })} rows={3} placeholder="Tell customers about your business…" />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label htmlFor="nic">NIC</Label>
+                <Input id="nic" value={profile.nic} onChange={(e) => setProfile({ ...profile, nic: e.target.value })} placeholder="200012345678" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input id="phone" type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} placeholder="+94 71 234 5678" />
+              </div>
             </div>
 
-            <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+            <Button onClick={handleSaveProfile} disabled={saving || uploadingImage} className="w-full">
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>
@@ -292,6 +382,40 @@ export default function ProviderSettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Store className="h-5 w-5" />
+            Your Businesses
+          </CardTitle>
+          <CardDescription>Businesses linked to your provider account</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {businesses.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No businesses found for this account.</p>
+          ) : (
+            <div className="space-y-3">
+              {businesses.map((business) => {
+                const StatusIcon = statusConfig[business.status].icon;
+
+                return (
+                  <div key={business.id} className="rounded-xl border border-border/60 bg-muted/20 p-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium truncate">{business.name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{business.category}</p>
+                    </div>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-1 text-xs ${statusConfig[business.status].className}`}>
+                      <StatusIcon className="h-3 w-3" />
+                      {statusConfig[business.status].label}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Notifications */}
       <Card>
