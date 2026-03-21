@@ -12,6 +12,7 @@ import {
 } from "firebase/firestore";
 import { db } from "@/config/firebase.config";
 import { User, Student, Provider, Admin, DashboardStats, UserRole } from "@/types";
+import { notifyAdmins } from "./notification-service";
 
 const USERS_COLLECTION = "users";
 
@@ -195,5 +196,26 @@ export async function migrateUserToUnifiedCollection(uid: string): Promise<void>
   await setDoc(doc(db, USERS_COLLECTION, uid), {
     ...user,
     updatedAt: serverTimestamp(),
+  });
+}
+
+export async function createUnifiedUserNotification(user: {
+  uid: string;
+  email: string;
+  role: UserRole;
+}): Promise<void> {
+  if (user.role === "admin") {
+    return;
+  }
+
+  await notifyAdmins("newUserSignups", {
+    title: "New user signup",
+    message: `A new ${user.role} signed up with ${user.email}.`,
+    eventType: "user.signup",
+    metadata: {
+      uid: user.uid,
+      email: user.email,
+      role: user.role,
+    },
   });
 }
