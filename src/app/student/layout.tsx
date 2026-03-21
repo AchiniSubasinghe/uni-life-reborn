@@ -11,10 +11,10 @@ import {
   LogOut,
   Menu,
   X,
-  GalleryVerticalEnd,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
 import { cn } from "@/lib/utils";
 import Cookies from "js-cookie";
@@ -37,6 +37,17 @@ export default function StudentLayout({
   const { userData, signOut } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const studentData = (userData || {}) as {
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+    photoURL?: string;
+    email?: string;
+  };
+  const displayName = studentData?.firstName
+    ? `${studentData.firstName} ${studentData.lastName || ""}`.trim()
+    : studentData?.fullName || "Student";
+  const photoURL = studentData?.photoURL;
 
   const handleSignOut = async () => {
     try {
@@ -107,13 +118,23 @@ export default function StudentLayout({
           <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-amber-500/20 border border-amber-400/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-semibold text-amber-300">
-                  {(userData && 'fullName' in userData ? userData.fullName?.charAt(0).toUpperCase() : null) || "S"}
-                </span>
+                {photoURL ? (
+                  <Image
+                    src={photoURL}
+                    alt="Student profile"
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-semibold text-amber-300">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-white text-sm">
-                  {(userData && 'fullName' in userData ? userData.fullName : null) || "Student"}
+                  {displayName}
                 </p>
                 <p className="text-xs text-white/40 truncate">{userData?.email}</p>
               </div>
@@ -162,5 +183,3 @@ export default function StudentLayout({
     </div>
   );
 }
-
-
