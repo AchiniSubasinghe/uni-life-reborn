@@ -15,6 +15,7 @@ import { getAllCategories } from "@/lib/services/category-service";
 import { toggleFavorite } from "@/lib/services/favorites-service";
 import { Business, Category, SearchFilters, BusinessCategory } from "@/types";
 import { cn } from "@/lib/utils";
+import { getPlatformSettings } from "@/lib/services/settings-service";
 
 function BrowsePageContent() {
   const searchParams = useSearchParams();
@@ -26,6 +27,7 @@ function BrowsePageContent() {
   const [loading, setLoading] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set());
+  const [allowGuestBrowsing, setAllowGuestBrowsing] = useState(true);
 
   const [filters, setFilters] = useState<SearchFilters>({
     category: (searchParams.get("category") as BusinessCategory) || undefined,
@@ -37,6 +39,7 @@ function BrowsePageContent() {
 
   useEffect(() => {
     loadCategories();
+    loadPlatformSettings();
   }, []);
 
   useEffect(() => {
@@ -53,6 +56,12 @@ function BrowsePageContent() {
   }
 
   async function loadBusinesses() {
+    if (!allowGuestBrowsing && !user) {
+      setBusinesses([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       let data: Business[];
@@ -84,6 +93,15 @@ function BrowsePageContent() {
       console.error("Error loading businesses:", error);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadPlatformSettings() {
+    try {
+      const settings = await getPlatformSettings();
+      setAllowGuestBrowsing(settings.allowGuestBrowsing);
+    } catch (error) {
+      console.error("Error loading platform settings:", error);
     }
   }
 
@@ -334,7 +352,20 @@ function BrowsePageContent() {
             </div>
 
             {/* Results Grid */}
-            {loading ? (
+            {!allowGuestBrowsing && !user ? (
+              <Card>
+                <CardContent className="py-12 text-center">
+                  <Filter className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-lg font-medium">Sign in required</p>
+                  <p className="text-muted-foreground mt-1">
+                    Guest browsing is disabled by platform settings.
+                  </p>
+                  <Button onClick={() => router.push("/login")} className="mt-4">
+                    Go to Login
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : loading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
                   <Card key={i} className="h-72 animate-pulse bg-muted" />
