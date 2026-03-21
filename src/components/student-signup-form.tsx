@@ -1,25 +1,32 @@
 "use client"
 
-import { useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Eye, EyeOff } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { createUserWithEmailAndPassword } from "firebase/auth"
-import { doc, setDoc, serverTimestamp } from "firebase/firestore"
+import {
+  FacebookAuthProvider,
+  getRedirectResult,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  User,
+  createUserWithEmailAndPassword,
+} from "firebase/auth"
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore"
 import Cookies from "js-cookie"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { auth, db } from "@/config/firebase.config"
+import { createUnifiedUserNotification } from "@/lib/services/user-service"
 
 const INITIAL_FORM = {
   fullName: "",
@@ -30,6 +37,22 @@ const INITIAL_FORM = {
 }
 
 type FormErrors = Partial<Record<keyof typeof INITIAL_FORM | "terms" | "submit", string>>
+type FirebaseAuthError = { code?: string; message?: string }
+
+function getAuthErrorMessage(error: unknown): string {
+  const authError = error as FirebaseAuthError
+
+  switch (authError.code) {
+    case "auth/popup-blocked":
+      return "Popup was blocked by your browser. Please allow popups and try again."
+    case "auth/account-exists-with-different-credential":
+      return "An account already exists with this email using a different sign-in method."
+    case "auth/operation-not-allowed":
+      return "This sign-in method is not enabled in Firebase Authentication settings."
+    default:
+      return authError.message || "Authentication failed. Please try again."
+  }
+}
 
 export function StudentSignUpForm({
   className,
@@ -42,6 +65,72 @@ export function StudentSignUpForm({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [agreedToTerms, setAgreedToTerms] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [popupLoading, setPopupLoading] = useState(false)
+  const [info, setInfo] = useState("")
+
+  const completeSocialSignUp = useCallback(async (firebaseUser: User) => {
+    const [userDoc, studentDoc, providerDoc] = await Promise.all([
+      getDoc(doc(db, "users", firebaseUser.uid)),
+      getDoc(doc(db, "students", firebaseUser.uid)),
+      getDoc(doc(db, "providers", firebaseUser.uid)),
+    ])
+
+    let role: "student" | "provider" | "admin" = "student"
+
+    if (userDoc.exists()) {
+      role = userDoc.data().role
+    } else if (studentDoc.exists()) {
+      role = "student"
+    } else if (providerDoc.exists()) {
+      role = "provider"
+    } else {
+      await setDoc(doc(db, "students", firebaseUser.uid), {
+        fullName: firebaseUser.displayName?.trim() || "Student User",
+        email: firebaseUser.email?.trim() || "",
+        phone: firebaseUser.phoneNumber?.trim() || "",
+        role: "student",
+        favoriteBusinessIds: [],
+        isActive: true,
+        createdAt: serverTimestamp(),
+      })
+
+      await createUnifiedUserNotification({
+        uid: firebaseUser.uid,
+        email: firebaseUser.email?.trim() || "",
+        role: "student",
+      })
+    }
+
+    const token = await firebaseUser.getIdToken()
+    Cookies.set("auth-token", token, { expires: 7 })
+    Cookies.set("user-role", role, { expires: 7 })
+
+    if (role === "provider") {
+      router.push("/provider/dashboard")
+      return
+    }
+
+    if (role === "admin") {
+      router.push("/admin/dashboard")
+      return
+    }
+
+    router.push("/student/dashboard")
+  }, [router])
+
+  useEffect(() => {
+    const resolveRedirectSignIn = async () => {
+      try {
+        const redirectResult = await getRedirectResult(auth)
+        if (!redirectResult?.user) return
+        await completeSocialSignUp(redirectResult.user)
+      } catch (error: unknown) {
+        setErrors({ submit: getAuthErrorMessage(error) })
+      }
+    }
+
+    resolveRedirectSignIn()
+  }, [completeSocialSignUp])
 
   const handleChange = (field: keyof typeof INITIAL_FORM, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -85,17 +174,96 @@ export function StudentSignUpForm({
         createdAt: serverTimestamp(),
       })
 
+      await createUnifiedUserNotification({
+        uid: userCredential.user.uid,
+        email: formData.email.trim(),
+        role: "student",
+      })
+
       // Set auth cookies for middleware
       const token = await userCredential.user.getIdToken()
       Cookies.set("auth-token", token, { expires: 7 })
       Cookies.set("user-role", "student", { expires: 7 })
 
       router.push("/student/dashboard")
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error)
-      setErrors({ submit: error.message })
+      const errorMessage = error instanceof Error ? error.message : "Failed to create account."
+      setErrors({ submit: errorMessage })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGoogleSignUp = async () => {
+    if (popupLoading || loading) return
+    setPopupLoading(true)
+    setErrors({})
+    setInfo("")
+
+    try {
+      const provider = new GoogleAuthProvider()
+      provider.setCustomParameters({ prompt: "select_account" })
+
+      const result = await signInWithPopup(auth, provider)
+      await completeSocialSignUp(result.user)
+    } catch (error: unknown) {
+      const authError = error as FirebaseAuthError
+
+      if (authError.code === "auth/popup-blocked" || authError.code === "auth/web-storage-unsupported") {
+        try {
+          const provider = new GoogleAuthProvider()
+          provider.setCustomParameters({ prompt: "select_account" })
+          setInfo("Using redirect sign-in because popup was blocked...")
+          await signInWithRedirect(auth, provider)
+          return
+        } catch (redirectError: unknown) {
+          setErrors({ submit: getAuthErrorMessage(redirectError) })
+          return
+        }
+      }
+
+      if (authError.code !== "auth/cancelled-popup-request" && authError.code !== "auth/popup-closed-by-user") {
+        setErrors({ submit: getAuthErrorMessage(authError) })
+      }
+    } finally {
+      setPopupLoading(false)
+    }
+  }
+
+  const handleFacebookSignUp = async () => {
+    if (popupLoading || loading) return
+    setPopupLoading(true)
+    setErrors({})
+    setInfo("")
+
+    try {
+      const provider = new FacebookAuthProvider()
+      provider.addScope("email")
+
+      const result = await signInWithPopup(auth, provider)
+      await completeSocialSignUp(result.user)
+    } catch (error: unknown) {
+      const authError = error as FirebaseAuthError
+
+      if (authError.code === "auth/popup-blocked" || authError.code === "auth/web-storage-unsupported") {
+        try {
+          const provider = new FacebookAuthProvider()
+          provider.addScope("email")
+          setInfo("Using redirect sign-in because popup was blocked...")
+          await signInWithRedirect(auth, provider)
+          return
+        } catch (redirectError: unknown) {
+          setErrors({ submit: getAuthErrorMessage(redirectError) })
+          return
+        }
+      }
+
+      if (authError.code !== "auth/cancelled-popup-request" && authError.code !== "auth/popup-closed-by-user") {
+        setErrors({ submit: getAuthErrorMessage(authError) })
+      }
+    } finally {
+      setPopupLoading(false)
     }
   }
 
@@ -258,7 +426,9 @@ export function StudentSignUpForm({
           <div className="flex flex-col gap-2.5">
             <button
               type="button"
-              className="relative flex items-center justify-center gap-3 w-full h-11 rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all duration-200 hover:bg-white/[0.07]"
+              onClick={handleGoogleSignUp}
+              disabled={popupLoading || loading}
+              className="relative flex items-center justify-center gap-3 w-full h-11 rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all duration-200 hover:bg-white/[0.07] disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
               <svg className="size-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
@@ -268,15 +438,23 @@ export function StudentSignUpForm({
             </button>
             <button
               type="button"
-              className="relative flex items-center justify-center gap-3 w-full h-11 rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all duration-200 hover:bg-white/[0.07]"
+              onClick={handleFacebookSignUp}
+              disabled={popupLoading || loading}
+              className="relative flex items-center justify-center gap-3 w-full h-11 rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all duration-200 hover:bg-white/[0.07] disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.10)' }}
             >
               <svg className="size-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701" fill="currentColor" />
+                <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073c0 6.019 4.388 11.009 10.125 11.927v-8.437H7.078v-3.49h3.047V9.413c0-3.017 1.792-4.685 4.533-4.685 1.313 0 2.686.236 2.686.236v2.963h-1.514c-1.492 0-1.956.931-1.956 1.887v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.082 24 18.092 24 12.073z" fill="currentColor" />
               </svg>
-              Continue with Apple
+              Continue with Facebook
             </button>
           </div>
+
+          {info && (
+            <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-400/20 px-3 py-2.5">
+              <span className="text-amber-200 text-sm">{info}</span>
+            </div>
+          )}
         </form>
       </div>
     </div>
