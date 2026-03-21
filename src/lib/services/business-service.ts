@@ -18,6 +18,8 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { db, storage } from "@/config/firebase.config";
 import { Business, BusinessFormData, BusinessStatus, BusinessCategory, SearchFilters, GeoLocation } from "@/types";
+import { notifyAdmins, notifyProviders, notifyStudents } from "./notification-service";
+import { getPlatformSettings } from "./settings-service";
 
 const BUSINESSES_COLLECTION = "businesses";
 
@@ -30,6 +32,11 @@ export async function createBusiness(
   providerName: string,
   images: File[]
 ): Promise<string> {
+  const platformSettings = await getPlatformSettings();
+  if (images.length > platformSettings.maxImagesPerBusiness) {
+    throw new Error(`You can upload up to ${platformSettings.maxImagesPerBusiness} images per business.`);
+  }
+
   // Upload images first
   const imageUrls = await uploadBusinessImages(images, providerId);
   
@@ -43,7 +50,7 @@ export async function createBusiness(
     location: new GeoPoint(data.latitude, data.longitude),
     images: imageUrls,
     coverImage: imageUrls[0] || "",
-    status: "pending" as BusinessStatus,
+    status: (platformSettings.requireApproval ? "pending" : "approved") as BusinessStatus,
     isBlocked: false,
     averageRating: 0,
     totalReviews: 0,
@@ -53,6 +60,31 @@ export async function createBusiness(
   };
 
   const docRef = await addDoc(collection(db, BUSINESSES_COLLECTION), businessData);
+
+  if (platformSettings.requireApproval) {
+    await notifyAdmins("newBusinessSubmissions", {
+      title: "New business submitted",
+      message: `${providerName} submitted ${data.name} for review.`,
+      eventType: "business.submitted",
+      metadata: {
+        businessId: docRef.id,
+        businessName: data.name,
+        providerId,
+      },
+    });
+  } else {
+    await notifyStudents("newBusinesses", {
+      title: "New business available",
+      message: `${data.name} has been added to UniLife.`,
+      eventType: "business.created",
+      metadata: {
+        businessId: docRef.id,
+        businessName: data.name,
+        providerId,
+      },
+    });
+  }
+
   return docRef.id;
 }
 
@@ -289,7 +321,7 @@ export async function updateBusiness(
   data: Partial<BusinessFormData>,
   newImages?: File[]
 ): Promise<void> {
-  const updateData: any = {
+  const updateData: Record<string, unknown> = {
     ...data,
     updatedAt: serverTimestamp(),
   };
@@ -335,6 +367,12 @@ export async function addBusinessImages(
 
   if (business.providerId !== providerId) {
     throw new Error("Only the business owner can add images");
+  }
+
+  const platformSettings = await getPlatformSettings();
+  const currentImageCount = (business.images || []).length;
+  if (currentImageCount + images.length > platformSettings.maxImagesPerBusiness) {
+    throw new Error(`You can upload up to ${platformSettings.maxImagesPerBusiness} images per business.`);
   }
 
   const uploadedUrls = await uploadBusinessImages(images, providerId);
@@ -385,7 +423,9 @@ export async function updateBusinessStatus(
   adminId: string,
   rejectionReason?: string
 ): Promise<void> {
-  const updateData: any = {
+  const business = await getBusinessById(businessId);
+
+  const updateData: Record<string, unknown> = {
     status,
     isBlocked: false,
     updatedAt: serverTimestamp(),
@@ -397,8 +437,45 @@ export async function updateBusinessStatus(
   } else if (status === "rejected" && rejectionReason) {
     updateData.rejectionReason = rejectionReason;
   }
-  
+
   await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), updateData);
+
+  if (business && (status === "approved" || status === "rejected")) {
+    await Promise.allSettled([
+      notifyProviders(
+        "approvalUpdates",
+        {
+          title: status === "approved" ? "Listing approved" : "Listing rejected",
+          message:
+            status === "approved"
+              ? `${business.name} has been approved and is now visible to students.`
+              : `${business.name} was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ""}`,
+          eventType: `business.${status}`,
+          metadata: {
+            businessId,
+            businessName: business.name,
+            adminId,
+            rejectionReason: rejectionReason || null,
+          },
+        },
+        business.providerId
+      ),
+      ...(status === "approved"
+        ? [
+            notifyStudents("newBusinesses", {
+              title: "New business available",
+              message: `${business.name} is now available on UniLife.`,
+              eventType: "business.approved",
+              metadata: {
+                businessId,
+                businessName: business.name,
+                providerId: business.providerId,
+              },
+            }),
+          ]
+        : []),
+    ]);
+  }
 }
 
 export async function updateBusinessRating(
