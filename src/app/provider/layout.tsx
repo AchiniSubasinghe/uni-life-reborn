@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -11,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  GalleryVerticalEnd,
   Clock,
 } from "lucide-react";
 import { useState } from "react";
@@ -50,10 +50,17 @@ export default function ProviderLayout({
     }
   };
 
-  const providerData = userData as any;
+  const providerData = (userData || {}) as {
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+    photoURL?: string;
+    isVerified?: boolean;
+  };
   const displayName = providerData?.firstName 
     ? `${providerData.firstName} ${providerData.lastName || ""}`.trim()
     : providerData?.fullName || "Provider";
+  const photoURL = providerData?.photoURL;
 
   return (
     <div className="min-h-screen site-bg">
@@ -107,9 +114,19 @@ export default function ProviderLayout({
           <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-teal-500/20 border border-teal-400/20 flex items-center justify-center flex-shrink-0">
-                <span className="text-sm font-semibold text-teal-300">
-                  {displayName.charAt(0).toUpperCase()}
-                </span>
+                {photoURL ? (
+                  <Image
+                    src={photoURL}
+                    alt="Provider profile"
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-sm font-semibold text-teal-300">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-white text-sm">{displayName}</p>
