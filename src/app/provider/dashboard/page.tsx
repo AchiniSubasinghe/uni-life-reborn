@@ -9,6 +9,7 @@ import { useAuth } from "@/context/auth-context";
 import { BusinessCard } from "@/components/shared/BusinessCard";
 import { getBusinessesByProvider } from "@/lib/services/business-service";
 import { Business } from "@/types";
+import { maybeSendProviderWeeklyReport } from "@/lib/services/notification-service";
 
 export default function ProviderDashboard() {
   const { userData } = useAuth();
@@ -22,6 +23,21 @@ export default function ProviderDashboard() {
       try {
         const data = await getBusinessesByProvider(userData.uid);
         setBusinesses(data);
+
+        const approvedBusinesses = data.filter((b) => b.status === "approved").length;
+        const pendingBusinesses = data.filter((b) => b.status === "pending").length;
+        const avgRating =
+          data.length > 0
+            ? data.reduce((sum, b) => sum + b.averageRating, 0) /
+              (data.filter((b) => b.averageRating > 0).length || 1)
+            : 0;
+
+        await maybeSendProviderWeeklyReport(userData.uid, {
+          totalBusinesses: data.length,
+          approvedBusinesses,
+          pendingBusinesses,
+          averageRating: avgRating,
+        });
       } catch (error) {
         console.error("Error loading businesses:", error);
       } finally {
@@ -32,7 +48,10 @@ export default function ProviderDashboard() {
     loadBusinesses();
   }, [userData?.uid]);
 
-  const providerData = userData as any;
+  const providerData = (userData || {}) as {
+    firstName?: string;
+    fullName?: string;
+  };
   const displayName = providerData?.firstName 
     ? providerData.firstName
     : providerData?.fullName?.split(" ")[0] || "Provider";
