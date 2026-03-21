@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   Home,
@@ -11,7 +12,6 @@ import {
   LogOut,
   Menu,
   X,
-  GalleryVerticalEnd,
   Shield,
   BarChart3,
 } from "lucide-react";
@@ -41,6 +41,17 @@ export default function AdminLayout({
   const { userData, signOut } = useAuth();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const adminData = (userData || {}) as {
+    firstName?: string;
+    lastName?: string;
+    fullName?: string;
+    photoURL?: string;
+    email?: string;
+  };
+  const displayName = adminData?.firstName
+    ? `${adminData.firstName} ${adminData.lastName || ""}`.trim()
+    : adminData?.fullName || "Administrator";
+  const photoURL = adminData?.photoURL;
 
   const handleSignOut = async () => {
     try {
@@ -101,12 +112,23 @@ export default function AdminLayout({
           <div className="px-5 py-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
             <div className="flex items-center gap-3">
               <div className="h-9 w-9 rounded-full bg-amber-500/20 border border-amber-400/20 flex items-center justify-center flex-shrink-0">
-                <Shield className="h-4 w-4 text-amber-300" />
+                {photoURL ? (
+                  <Image
+                    src={photoURL}
+                    alt="Admin profile"
+                    width={36}
+                    height={36}
+                    className="h-9 w-9 rounded-full object-cover"
+                  />
+                ) : (
+                  <Shield className="h-4 w-4 text-amber-300" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-medium truncate text-white text-sm">
-                  {(userData as any)?.fullName || "Administrator"}
+                  {displayName}
                 </p>
+                <p className="text-xs text-white/40 truncate mb-1">{adminData?.email}</p>
                 <span className="inline-flex items-center rounded-full bg-amber-500/15 border border-amber-400/20 px-2 py-0.5 text-xs text-amber-300">
                   Admin
                 </span>
