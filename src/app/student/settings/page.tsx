@@ -1,19 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { ChangeEvent, useState, useEffect } from "react";
+import Image from "next/image";
 import { useAuth } from "@/context/auth-context";
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
+import { updateEmail, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { auth } from "@/config/firebase.config";
 import {
   getStudentSettings,
   saveStudentNotifications,
   saveStudentProfile,
+  uploadProfileImage,
 } from "@/lib/services/settings-service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   User,
   Lock,
@@ -28,15 +29,17 @@ interface StudentProfile {
   firstName: string;
   lastName: string;
   email: string;
+  photoURL: string;
   phone: string;
   university: string;
   studentId: string;
 }
 
 export default function StudentSettingsPage() {
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
@@ -44,6 +47,7 @@ export default function StudentSettingsPage() {
     firstName: "",
     lastName: "",
     email: "",
+    photoURL: "",
     phone: "",
     university: "",
     studentId: "",
@@ -72,6 +76,7 @@ export default function StudentSettingsPage() {
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
+          photoURL: data.photoURL,
           phone: data.phone,
           university: data.university,
           studentId: data.studentId,
@@ -97,6 +102,8 @@ export default function StudentSettingsPage() {
       await saveStudentProfile(user.uid, {
         firstName: profile.firstName,
         lastName: profile.lastName,
+        email: profile.email,
+        photoURL: profile.photoURL,
         phone: profile.phone,
         university: profile.university,
         studentId: profile.studentId,
@@ -104,17 +111,58 @@ export default function StudentSettingsPage() {
 
       // Update Firebase Auth profile
       if (auth.currentUser) {
+        if (auth.currentUser.email !== profile.email.trim()) {
+          await updateEmail(auth.currentUser, profile.email.trim());
+        }
+
         await updateProfile(auth.currentUser, {
           displayName: `${profile.firstName} ${profile.lastName}`,
+          photoURL: profile.photoURL || null,
         });
       }
 
+      await refreshUserData();
+
       setMessage({ type: "success", text: "Profile updated successfully!" });
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("Error saving profile:", error);
+      if ((error as { code?: string })?.code === "auth/requires-recent-login") {
+        setMessage({ type: "error", text: "Please sign in again before changing your email." });
+        return;
+      }
       setMessage({ type: "error", text: "Failed to save profile. Please try again." });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleProfileImageUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage({ type: "error", text: "Please select an image file." });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setMessage({ type: "error", text: "Image size must be less than 5MB." });
+      return;
+    }
+
+    setUploadingImage(true);
+    setMessage(null);
+
+    try {
+      const imageUrl = await uploadProfileImage(user.uid, file);
+      setProfile((prev) => ({ ...prev, photoURL: imageUrl }));
+      setMessage({ type: "success", text: "Profile picture uploaded. Click Save Changes to apply." });
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      setMessage({ type: "error", text: "Failed to upload profile image. Please try again." });
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
     }
   };
 
@@ -222,6 +270,33 @@ export default function StudentSettingsPage() {
             <CardDescription>Update your personal information</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex items-center gap-4 rounded-xl p-4 border border-border/60 bg-muted/20">
+              {profile.photoURL ? (
+                <Image
+                  src={profile.photoURL}
+                  alt="Profile"
+                  className="h-16 w-16 rounded-full object-cover border border-border"
+                  width={64}
+                  height={64}
+                />
+              ) : (
+                <div className="h-16 w-16 rounded-full border border-border bg-muted flex items-center justify-center text-lg font-semibold">
+                  {(profile.firstName?.[0] || "U").toUpperCase()}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="studentProfileImage">Profile Picture</Label>
+                <Input
+                  id="studentProfileImage"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleProfileImageUpload}
+                  disabled={uploadingImage}
+                />
+                <p className="text-xs text-muted-foreground">JPG, PNG or WEBP. Max size 5MB.</p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
@@ -243,8 +318,13 @@ export default function StudentSettingsPage() {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={profile.email} disabled className="opacity-50 cursor-not-allowed" />
-              <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+              <Input
+                id="email"
+                type="email"
+                value={profile.email}
+                onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+              />
+              <p className="text-xs text-muted-foreground">Changing email may require a recent login.</p>
             </div>
 
             <div className="space-y-2">
@@ -277,7 +357,7 @@ export default function StudentSettingsPage() {
               </div>
             </div>
 
-            <Button onClick={handleSaveProfile} disabled={saving} className="w-full">
+            <Button onClick={handleSaveProfile} disabled={saving || uploadingImage} className="w-full">
               {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>
