@@ -15,6 +15,7 @@ import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage
 import { db, storage } from "@/config/firebase.config";
 import { BusinessPost } from "@/types";
 import { getBusinessById } from "./business-service";
+import { notifyStudents } from "./notification-service";
 
 const BUSINESS_POSTS_COLLECTION = "businessPosts";
 
@@ -52,6 +53,18 @@ export async function createBusinessPost(
     content,
     imageUrl: imageUrl || null,
     createdAt: serverTimestamp(),
+  });
+
+  await notifyStudents("newBusinesses", {
+    title: "New update from a business",
+    message: `${providerName} posted: ${title}`,
+    eventType: "business.post.created",
+    metadata: {
+      businessId,
+      postId: postRef.id,
+      providerId,
+      title,
+    },
   });
 
   return postRef.id;
