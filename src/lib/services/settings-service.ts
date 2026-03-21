@@ -1,5 +1,6 @@
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { db } from "@/config/firebase.config";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { db, storage } from "@/config/firebase.config";
 import {
   AdminNotificationSettings,
   ProviderNotificationSettings,
@@ -32,6 +33,7 @@ interface StudentSettingsPayload {
   firstName: string;
   lastName: string;
   email: string;
+  photoURL: string;
   phone: string;
   university: string;
   studentId: string;
@@ -39,20 +41,31 @@ interface StudentSettingsPayload {
 }
 
 interface ProviderSettingsPayload {
-  businessName: string;
-  ownerName: string;
+  firstName: string;
+  lastName: string;
+  nic: string;
   email: string;
+  photoURL: string;
   phone: string;
-  address: string;
-  description: string;
-  website: string;
   notifications: ProviderNotificationSettings;
+}
+
+interface LegacyProviderProfileFields {
+  businessName?: string;
+  ownerName?: string;
+  email?: string;
+  photoURL?: string;
+  phone?: string;
+  address?: string;
+  description?: string;
+  website?: string;
 }
 
 interface AdminSettingsPayload {
   firstName: string;
   lastName: string;
   email: string;
+  photoURL: string;
   notifications: AdminNotificationSettings;
 }
 
@@ -104,6 +117,7 @@ export async function getStudentSettings(
     firstName: data.firstName || "",
     lastName: data.lastName || "",
     email: data.email || email || "",
+    photoURL: data.photoURL || "",
     phone: data.phone || "",
     university: data.university || "",
     studentId: data.studentId || "",
@@ -116,13 +130,16 @@ export async function getStudentSettings(
 
 export async function saveStudentProfile(
   userId: string,
-  payload: Omit<StudentSettingsPayload, "notifications" | "email">
+  payload: Omit<StudentSettingsPayload, "notifications">
 ): Promise<void> {
   const collectionName = await resolveProfileCollection(userId, "students");
+  const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+
   await setDoc(
     doc(db, collectionName, userId),
     {
       ...payload,
+      fullName,
       updatedAt: serverTimestamp(),
     },
     { merge: true }
@@ -150,17 +167,23 @@ export async function getProviderSettings(
 ): Promise<ProviderSettingsPayload> {
   const collectionName = await resolveProfileCollection(userId, "providers");
   const snap = await getDoc(doc(db, collectionName, userId));
-  const data = snap.data() || {};
+  const data = (snap.data() || {}) as Record<string, unknown>;
+  const legacyOwnerName =
+    typeof data.ownerName === "string" ? data.ownerName.trim() : "";
+  const ownerNameParts = legacyOwnerName.split(/\s+/).filter(Boolean);
+  const derivedFirstName = ownerNameParts[0] || "";
+  const derivedLastName = ownerNameParts.slice(1).join(" ");
 
   return {
-    businessName: data.businessName || "",
-    ownerName:
-      data.ownerName || `${data.firstName || ""} ${data.lastName || ""}`.trim(),
-    email: data.email || email || "",
-    phone: data.phone || "",
-    address: data.address || "",
-    description: data.description || "",
-    website: data.website || "",
+    firstName:
+      (typeof data.firstName === "string" ? data.firstName : derivedFirstName) ||
+      "",
+    lastName:
+      (typeof data.lastName === "string" ? data.lastName : derivedLastName) || "",
+    nic: (typeof data.nic === "string" ? data.nic : "") || "",
+    email: (typeof data.email === "string" ? data.email : "") || email || "",
+    photoURL: (typeof data.photoURL === "string" ? data.photoURL : "") || "",
+    phone: (typeof data.phone === "string" ? data.phone : "") || "",
     notifications: {
       ...DEFAULT_PROVIDER_NOTIFICATIONS,
       ...(data.notifications || {}),
@@ -170,7 +193,7 @@ export async function getProviderSettings(
 
 export async function saveProviderProfile(
   userId: string,
-  payload: Omit<ProviderSettingsPayload, "notifications" | "email">
+  payload: Omit<ProviderSettingsPayload, "notifications"> & LegacyProviderProfileFields
 ): Promise<void> {
   const collectionName = await resolveProfileCollection(userId, "providers");
   await setDoc(
@@ -210,6 +233,7 @@ export async function getAdminSettings(
     firstName: data.firstName || "",
     lastName: data.lastName || "",
     email: data.email || email || "",
+    photoURL: data.photoURL || "",
     notifications: {
       ...DEFAULT_ADMIN_NOTIFICATIONS,
       ...(data.notifications || {}),
@@ -219,13 +243,16 @@ export async function getAdminSettings(
 
 export async function saveAdminProfile(
   userId: string,
-  payload: Omit<AdminSettingsPayload, "notifications" | "email">
+  payload: Omit<AdminSettingsPayload, "notifications">
 ): Promise<void> {
   const collectionName = await resolveProfileCollection(userId, "users");
+  const fullName = `${payload.firstName} ${payload.lastName}`.trim();
+
   await setDoc(
     doc(db, collectionName, userId),
     {
       ...payload,
+      fullName,
       updatedAt: serverTimestamp(),
     },
     { merge: true }
@@ -284,4 +311,13 @@ export async function savePlatformSettings(
     },
     { merge: true }
   );
+}
+
+export async function uploadProfileImage(userId: string, file: File): Promise<string> {
+  const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+  const filePath = `profile-images/${userId}/${Date.now()}-${safeName}`;
+  const imageRef = ref(storage, filePath);
+
+  await uploadBytes(imageRef, file);
+  return getDownloadURL(imageRef);
 }
