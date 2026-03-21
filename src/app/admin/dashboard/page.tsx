@@ -20,6 +20,7 @@ import { getDashboardStats } from "@/lib/services/user-service";
 import { getPendingBusinesses, updateBusinessStatus } from "@/lib/services/business-service";
 import { getReportedReviews } from "@/lib/services/review-service";
 import { DashboardStats, Business, Review } from "@/types";
+import { maybeSendAdminDailyDigest } from "@/lib/services/notification-service";
 
 export default function AdminDashboard() {
   const { userData } = useAuth();
@@ -40,6 +41,15 @@ export default function AdminDashboard() {
         setStats(statsData);
         setPendingBusinesses(pendingData);
         setReportedReviews(reportedData);
+
+        if (userData?.uid) {
+          await maybeSendAdminDailyDigest(userData.uid, {
+            pendingApprovals: statsData.pendingApprovals,
+            reportedReviews: statsData.reportedReviews,
+            totalUsers: statsData.totalUsers,
+            totalBusinesses: statsData.totalBusinesses,
+          });
+        }
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -48,7 +58,7 @@ export default function AdminDashboard() {
     }
 
     loadDashboardData();
-  }, []);
+  }, [userData?.uid]);
 
   const handleApproval = async (businessId: string, action: "approve" | "reject") => {
     if (!userData?.uid) return;
