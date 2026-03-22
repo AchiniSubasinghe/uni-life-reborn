@@ -8,11 +8,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { auth, db } from "@/config/firebase.config"
+import { auth } from "@/config/firebase.config"
 import {
-  FacebookAuthProvider,
-  getRedirectResult,
   GoogleAuthProvider,
+  getRedirectResult,
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
@@ -20,46 +19,10 @@ import {
 } from "firebase/auth";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { doc, getDoc } from "firebase/firestore";
 import Cookies from "js-cookie";
+import { getDashboardUrl, resolveUserRole } from "@/lib/auth/user-role-resolution";
 
-type UserRole = "student" | "provider" | "admin";
 type FirebaseAuthError = { code?: string; message?: string };
-
-async function getUserRole(uid: string): Promise<UserRole | null> {
-  // Check unified users collection first
-  const userDoc = await getDoc(doc(db, "users", uid));
-  if (userDoc.exists()) {
-    return userDoc.data().role as UserRole;
-  }
-
-  // Check legacy students collection
-  const studentDoc = await getDoc(doc(db, "students", uid));
-  if (studentDoc.exists()) {
-    return "student";
-  }
-
-  // Check legacy providers collection
-  const providerDoc = await getDoc(doc(db, "providers", uid));
-  if (providerDoc.exists()) {
-    return "provider";
-  }
-
-  return null;
-}
-
-function getDashboardUrl(role: UserRole): string {
-  switch (role) {
-    case "student":
-      return "/student/dashboard";
-    case "provider":
-      return "/provider/dashboard";
-    case "admin":
-      return "/admin/dashboard";
-    default:
-      return "/";
-  }
-}
 
 function getAuthErrorMessage(error: unknown): string {
   const authError = error as FirebaseAuthError;
@@ -96,11 +59,22 @@ export function LoginForm({
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
-  const completeSocialLogin = useCallback(async (firebaseUser: User, signupProvider: "google" | "facebook") => {
-    const role = await getUserRole(firebaseUser.uid);
+  const completeSocialLogin = useCallback(async (firebaseUser: User) => {
+    const email = firebaseUser.email?.trim().toLowerCase()
+
+    if (!email) {
+      setError("Unable to read email from your Google account. Please use another account.")
+      return
+    }
+
+    const role = await resolveUserRole({
+      uid: firebaseUser.uid,
+      email,
+    });
 
     if (!role) {
-      router.push(`/signup?${signupProvider}=true`);
+      setInfo("No account found for this Google email. Please choose Student or Provider to continue.")
+      router.push("/signup");
       return;
     }
 
@@ -119,10 +93,8 @@ export function LoginForm({
 
         const providerId = redirectResult.providerId;
         if (providerId === "google.com") {
-          await completeSocialLogin(redirectResult.user, "google");
-        } else if (providerId === "facebook.com") {
-          await completeSocialLogin(redirectResult.user, "facebook");
-        }
+          await completeSocialLogin(redirectResult.user);
+        } 
       } catch (err: unknown) {
         setError(getAuthErrorMessage(err));
       }
@@ -144,7 +116,10 @@ export function LoginForm({
       );
 
       // Get user role and redirect accordingly
-      const role = await getUserRole(userCredential.user.uid);
+      const role = await resolveUserRole({
+        uid: userCredential.user.uid,
+        email: userCredential.user.email,
+      });
 
       if (!role) {
         setError("User account not found. Please sign up first.");
@@ -180,7 +155,7 @@ export function LoginForm({
       provider.setCustomParameters({ prompt: "select_account" });
 
       const result = await signInWithPopup(auth, provider);
-      await completeSocialLogin(result.user, "google");
+      await completeSocialLogin(result.user);
     } catch (error: unknown) {
       const authError = error as FirebaseAuthError;
 
@@ -188,43 +163,6 @@ export function LoginForm({
         try {
           const provider = new GoogleAuthProvider();
           provider.setCustomParameters({ prompt: "select_account" });
-          setInfo("Using redirect sign-in because popup was blocked...");
-          await signInWithRedirect(auth, provider);
-          return;
-        } catch (redirectError: unknown) {
-          setError(getAuthErrorMessage(redirectError));
-          return;
-        }
-      }
-
-      if (authError.code !== "auth/cancelled-popup-request" && authError.code !== "auth/popup-closed-by-user") {
-        console.error(authError.message);
-        setError(getAuthErrorMessage(authError));
-      }
-    } finally {
-      setPopupLoading(false);
-    }
-  };
-
-  const handleFacebookLogin = async () => {
-    if (popupLoading) return;
-    setPopupLoading(true);
-    setError("");
-    setInfo("");
-
-    try {
-      const provider = new FacebookAuthProvider();
-      provider.addScope("email");
-
-      const result = await signInWithPopup(auth, provider);
-      await completeSocialLogin(result.user, "facebook");
-    } catch (error: unknown) {
-      const authError = error as FirebaseAuthError;
-
-      if (authError.code === "auth/popup-blocked" || authError.code === "auth/web-storage-unsupported") {
-        try {
-          const provider = new FacebookAuthProvider();
-          provider.addScope("email");
           setInfo("Using redirect sign-in because popup was blocked...");
           await signInWithRedirect(auth, provider);
           return;
@@ -265,7 +203,6 @@ export function LoginForm({
             </p>
           </div>
 
-          {/* Social buttons */}
           <div className="flex flex-col gap-2.5">
             <button
               type="button"
@@ -278,18 +215,6 @@ export function LoginForm({
                 <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" fill="currentColor" />
               </svg>
               Continue with Google
-            </button>
-            <button
-              type="button"
-              onClick={handleFacebookLogin}
-              disabled={popupLoading}
-              className="relative flex items-center justify-center gap-3 w-full h-11 rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all duration-200 hover:bg-white/[0.07] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.10)' }}
-            >
-              <svg className="size-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073c0 6.019 4.388 11.009 10.125 11.927v-8.437H7.078v-3.49h3.047V9.413c0-3.017 1.792-4.685 4.533-4.685 1.313 0 2.686.236 2.686.236v2.963h-1.514c-1.492 0-1.956.931-1.956 1.887v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.082 24 18.092 24 12.073z" fill="currentColor" />
-              </svg>
-              Continue with Facebook
             </button>
           </div>
 
