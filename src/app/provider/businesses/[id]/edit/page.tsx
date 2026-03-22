@@ -12,7 +12,7 @@ import { useAuth } from "@/context/auth-context";
 import { DEFAULT_CATEGORIES } from "@/lib/services/category-service";
 import { getBusinessById, updateBusiness } from "@/lib/services/business-service";
 import { GoogleMapPicker } from "@/components/shared/GoogleMapPicker";
-import { Business, BusinessCategory } from "@/types";
+import { Business, BusinessCategory, BusinessFormData } from "@/types";
 
 export default function EditBusinessPage() {
   const params = useParams();
@@ -96,18 +96,29 @@ export default function EditBusinessPage() {
     setError("");
 
     try {
-      await updateBusiness(businessId, {
+      const payload: Partial<BusinessFormData> = {
         name: formData.name,
         description: formData.description,
         category: formData.category,
         address: formData.address,
         city: formData.city,
         phone: formData.phone,
-        email: formData.email || undefined,
-        website: formData.website || undefined,
         latitude: formData.latitude,
         longitude: formData.longitude,
-      });
+      };
+
+      const trimmedEmail = formData.email.trim();
+      const trimmedWebsite = formData.website.trim();
+
+      if (trimmedEmail) {
+        payload.email = trimmedEmail;
+      }
+
+      if (trimmedWebsite) {
+        payload.website = trimmedWebsite;
+      }
+
+      await updateBusiness(businessId, payload);
 
       router.push("/provider/businesses?updated=true");
     } catch (saveError: any) {

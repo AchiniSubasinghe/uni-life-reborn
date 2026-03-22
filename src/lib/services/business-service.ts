@@ -325,6 +325,13 @@ export async function updateBusiness(
     ...data,
     updatedAt: serverTimestamp(),
   };
+
+  const needsBusinessLookup =
+    !!newImages?.length || !!data.name || !!data.description || !!data.category;
+
+  const existingBusiness = needsBusinessLookup
+    ? await getBusinessById(businessId)
+    : null;
   
   if (data.latitude !== undefined && data.longitude !== undefined) {
     updateData.location = new GeoPoint(data.latitude, data.longitude);
@@ -334,21 +341,24 @@ export async function updateBusiness(
   
   if (data.name || data.description || data.category) {
     updateData.searchKeywords = generateSearchKeywords(
-      data.name || "",
-      data.description || "",
-      data.category || "other"
+      data.name ?? existingBusiness?.name ?? "",
+      data.description ?? existingBusiness?.description ?? "",
+      data.category ?? existingBusiness?.category ?? "other"
     );
   }
   
   if (newImages && newImages.length > 0) {
-    const business = await getBusinessById(businessId);
-    if (business) {
-      const imageUrls = await uploadBusinessImages(newImages, business.providerId);
-      updateData.images = [...(business.images || []), ...imageUrls];
+    if (existingBusiness) {
+      const imageUrls = await uploadBusinessImages(newImages, existingBusiness.providerId);
+      updateData.images = [...(existingBusiness.images || []), ...imageUrls];
     }
   }
+
+  const sanitizedUpdateData = Object.fromEntries(
+    Object.entries(updateData).filter(([, value]) => value !== undefined)
+  );
   
-  await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), updateData);
+  await updateDoc(doc(db, BUSINESSES_COLLECTION, businessId), sanitizedUpdateData);
 }
 
 export async function addBusinessImages(
