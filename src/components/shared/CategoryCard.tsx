@@ -40,28 +40,31 @@ export function CategoryCard({ category, href, className }: CategoryCardProps) {
   const linkHref = href || `/browse?category=${category.slug}`;
 
   return (
-    <Link href={linkHref}>
+    <Link href={linkHref} className="block h-full">
       <Card
         className={cn(
-          "group cursor-pointer transition-all hover:shadow-[0_8px_40px_rgba(217,119,6,0.18)] hover:border-white/20",
+          "group h-full cursor-pointer transition-all hover:shadow-[0_8px_40px_rgba(217,119,6,0.18)] hover:border-white/20",
           className
         )}
       >
-        <CardContent className="p-6 flex flex-col items-center text-center">
+        <CardContent className="p-6 h-full flex flex-col items-center text-center">
           <div className="h-14 w-14 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center mb-4 group-hover:bg-amber-500/25 transition-colors">
             <Icon className="h-7 w-7 text-amber-300" />
           </div>
           <h3 className="font-semibold text-lg group-hover:text-amber-300 transition-colors">
             {category.name}
           </h3>
-          <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+          <p className="text-sm text-muted-foreground mt-1 line-clamp-2 min-h-10">
             {category.description}
           </p>
-          {category.businessCount > 0 && (
-            <span className="mt-3 text-xs text-muted-foreground">
-              {category.businessCount} {category.businessCount === 1 ? "listing" : "listings"}
-            </span>
-          )}
+          <span
+            className={cn(
+              "mt-3 text-xs text-muted-foreground min-h-4",
+              category.businessCount > 0 ? "visible" : "invisible"
+            )}
+          >
+            {category.businessCount} {category.businessCount === 1 ? "listing" : "listings"}
+          </span>
         </CardContent>
       </Card>
     </Link>
