@@ -4,8 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MessageCircle, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import { useHomeStats } from "@/lib/hooks/use-home-stats";
 
 export default function HeroSection() {
+  const { stats } = useHomeStats();
+
   return (
     <section
       id="hero"
@@ -106,9 +109,9 @@ export default function HeroSection() {
           className="mt-20 flex flex-wrap items-center justify-center gap-6 md:gap-12"
         >
           {[
-            { value: "50+", label: "Verified businesses" },
+            { value: stats.verifiedBusinesses.toLocaleString(), label: "Verified businesses" },
             { value: "3", label: "Universities covered" },
-            { value: "2,500+", label: "Active students" },
+            { value: stats.activeStudents.toLocaleString(), label: "Active students" },
             { value: "24/7", label: "AI support" },
           ].map((stat) => (
             <div key={stat.label} className="glass glass-sheen rounded-2xl px-6 py-4 text-center min-w-[110px]">

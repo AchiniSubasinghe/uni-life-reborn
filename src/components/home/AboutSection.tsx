@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import { CheckCircle, Clock, MapPin, Shield } from "lucide-react";
+import { useHomeStats } from "@/lib/hooks/use-home-stats";
 
 const features = [
   {
@@ -35,6 +36,8 @@ const features = [
 ];
 
 export default function AboutSection() {
+  const { stats } = useHomeStats();
+
   return (
     <section id="about" className="relative py-28 px-6 overflow-hidden">
       {/* orb */}
@@ -67,9 +70,9 @@ export default function AboutSection() {
             {/* Mini stats */}
             <div className="mt-10 grid grid-cols-3 gap-4">
               {[
-                { v: "50+", l: "Businesses" },
+                { v: stats.verifiedBusinesses.toLocaleString(), l: "Verified businesses" },
                 { v: "3", l: "Universities" },
-                { v: "2.5k+", l: "Students" },
+                { v: stats.activeStudents.toLocaleString(), l: "Active students" },
               ].map((s) => (
                 <div key={s.l} className="glass glass-sheen rounded-xl p-4 text-center">
                   <div className="text-2xl font-bold text-white">{s.v}</div>
