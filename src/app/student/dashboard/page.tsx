@@ -139,7 +139,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
@@ -182,21 +182,6 @@ export default function StudentDashboard() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
-                <Search className="h-5 w-5 text-amber-400" />
-              </div>
-              <div>
-                <Link href="/student/browse" className="text-2xl font-bold hover:text-primary">
-                  Search
-                </Link>
-                <p className="text-sm text-muted-foreground">Explore Now</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Categories Section */}
