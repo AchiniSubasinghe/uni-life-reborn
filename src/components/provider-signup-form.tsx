@@ -6,15 +6,15 @@ import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
-  FacebookAuthProvider,
   getRedirectResult,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
+  signOut,
   User,
   createUserWithEmailAndPassword,
 } from "firebase/auth"
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore"
+import { doc, setDoc, serverTimestamp } from "firebase/firestore"
 import Cookies from "js-cookie"
 import {
   Field,
@@ -25,6 +25,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { auth, db } from "@/config/firebase.config"
 import { createUnifiedUserNotification } from "@/lib/services/user-service"
+import { getDashboardUrl, resolveUserRole } from "@/lib/auth/user-role-resolution"
 
 const INITIAL_FORM = {
   firstName: "",
@@ -69,28 +70,40 @@ export function ProviderSignUpForm({
   const [info, setInfo] = useState("")
 
   const completeSocialSignUp = useCallback(async (firebaseUser: User) => {
-    const [userDoc, studentDoc, providerDoc] = await Promise.all([
-      getDoc(doc(db, "users", firebaseUser.uid)),
-      getDoc(doc(db, "students", firebaseUser.uid)),
-      getDoc(doc(db, "providers", firebaseUser.uid)),
-    ])
+    const email = firebaseUser.email?.trim().toLowerCase()
 
-    let role: "student" | "provider" | "admin" = "provider"
+    if (!email) {
+      await signOut(auth)
+      setErrors({
+        submit: "Unable to read email from your Google account. Please use another account.",
+      })
+      return
+    }
 
-    if (userDoc.exists()) {
-      role = userDoc.data().role
-    } else if (studentDoc.exists()) {
-      role = "student"
-    } else if (providerDoc.exists()) {
-      role = "provider"
-    } else {
+    const existingRole = await resolveUserRole({
+      uid: firebaseUser.uid,
+      email,
+    })
+
+    if (existingRole && existingRole !== "provider") {
+      await signOut(auth)
+      setErrors({
+        submit: "This Google account is already registered as a different account type. Please use the correct sign-in page.",
+      })
+      return
+    }
+
+    let role: "student" | "provider" | "admin" = existingRole ?? "provider"
+
+    if (!existingRole) {
       const fullName = firebaseUser.displayName?.trim() || ""
       const [firstName, ...rest] = fullName.split(" ")
 
       await setDoc(doc(db, "providers", firebaseUser.uid), {
         firstName: firstName || "Provider",
         lastName: rest.join(" ") || "User",
-        email: firebaseUser.email?.trim() || "",
+        email,
+        normalizedEmail: email,
         nic: "",
         phone: firebaseUser.phoneNumber?.trim() || "",
         role: "provider",
@@ -102,26 +115,18 @@ export function ProviderSignUpForm({
 
       await createUnifiedUserNotification({
         uid: firebaseUser.uid,
-        email: firebaseUser.email?.trim() || "",
+        email,
         role: "provider",
       })
+
+      role = "provider"
     }
 
     const token = await firebaseUser.getIdToken()
     Cookies.set("auth-token", token, { expires: 7 })
     Cookies.set("user-role", role, { expires: 7 })
 
-    if (role === "student") {
-      router.push("/student/dashboard")
-      return
-    }
-
-    if (role === "admin") {
-      router.push("/admin/dashboard")
-      return
-    }
-
-    router.push("/provider/dashboard")
+    router.push(getDashboardUrl(role))
   }, [router])
 
   useEffect(() => {
@@ -177,6 +182,7 @@ export function ProviderSignUpForm({
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim(),
+        normalizedEmail: formData.email.trim().toLowerCase(),
         nic: formData.nic.trim(),
         phone: formData.phone.trim(),
         role: "provider",
@@ -242,43 +248,6 @@ export function ProviderSignUpForm({
       setPopupLoading(false)
     }
   }
-
-  const handleFacebookSignUp = async () => {
-    if (popupLoading || loading) return
-    setPopupLoading(true)
-    setErrors({})
-    setInfo("")
-
-    try {
-      const provider = new FacebookAuthProvider()
-      provider.addScope("email")
-
-      const result = await signInWithPopup(auth, provider)
-      await completeSocialSignUp(result.user)
-    } catch (error: unknown) {
-      const authError = error as FirebaseAuthError
-
-      if (authError.code === "auth/popup-blocked" || authError.code === "auth/web-storage-unsupported") {
-        try {
-          const provider = new FacebookAuthProvider()
-          provider.addScope("email")
-          setInfo("Using redirect sign-in because popup was blocked...")
-          await signInWithRedirect(auth, provider)
-          return
-        } catch (redirectError: unknown) {
-          setErrors({ submit: getAuthErrorMessage(redirectError) })
-          return
-        }
-      }
-
-      if (authError.code !== "auth/cancelled-popup-request" && authError.code !== "auth/popup-closed-by-user") {
-        setErrors({ submit: getAuthErrorMessage(authError) })
-      }
-    } finally {
-      setPopupLoading(false)
-    }
-  }
-
 
   return (
     <div className={cn("flex flex-col gap-4", className)} {...props}>
@@ -480,18 +449,6 @@ export function ProviderSignUpForm({
                 <path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z" fill="currentColor" />
               </svg>
               Continue with Google
-            </button>
-            <button
-              type="button"
-              onClick={handleFacebookSignUp}
-              disabled={popupLoading || loading}
-              className="relative flex items-center justify-center gap-3 w-full h-11 rounded-xl text-sm font-medium text-white/80 hover:text-white transition-all duration-200 hover:bg-white/[0.07] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ background: 'rgba(255,255,255,0.055)', border: '1px solid rgba(255,255,255,0.10)' }}
-            >
-              <svg className="size-[18px] shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
-                <path d="M24 12.073C24 5.404 18.627 0 12 0S0 5.404 0 12.073c0 6.019 4.388 11.009 10.125 11.927v-8.437H7.078v-3.49h3.047V9.413c0-3.017 1.792-4.685 4.533-4.685 1.313 0 2.686.236 2.686.236v2.963h-1.514c-1.492 0-1.956.931-1.956 1.887v2.265h3.328l-.532 3.49h-2.796V24C19.612 23.082 24 18.092 24 12.073z" fill="currentColor" />
-              </svg>
-              Continue with Facebook
             </button>
           </div>
 
