@@ -4,10 +4,8 @@ import { useEffect, useState } from "react";
 import {
   Users,
   Search,
-  MoreVertical,
   UserCheck,
   UserX,
-  Mail,
   Phone,
   Calendar,
   Building2,
@@ -106,6 +104,25 @@ export default function AdminUsersPage() {
       return `${(user as any).firstName} ${(user as any).lastName || ""}`.trim();
     }
     return user.email.split("@")[0];
+  };
+
+  const getUserPhotoUrl = (user: User): string | null => {
+    const profile = user as User & {
+      photoURL?: string;
+      profileImage?: string;
+      profileImageUrl?: string;
+      avatarUrl?: string;
+      imageUrl?: string;
+    };
+
+    return (
+      profile.photoURL ||
+      profile.profileImage ||
+      profile.profileImageUrl ||
+      profile.avatarUrl ||
+      profile.imageUrl ||
+      null
+    );
   };
 
   const stats = {
@@ -239,14 +256,23 @@ export default function AdminUsersPage() {
               <tbody>
                 {filteredUsers.map((user) => {
                   const RoleIcon = ROLE_ICONS[user.role];
+                  const photoUrl = getUserPhotoUrl(user);
                   return (
                     <tr key={user.uid} className="border-b last:border-0">
                       <td className="p-4">
                         <div className="flex items-center gap-3">
                           <div className="h-10 w-10 rounded-full bg-amber-500/15 border border-amber-400/20 flex items-center justify-center">
-                            <span className="text-sm font-semibold text-amber-300">
-                              {getUserDisplayName(user).charAt(0).toUpperCase()}
-                            </span>
+                            {photoUrl ? (
+                              <img
+                                src={photoUrl}
+                                alt={getUserDisplayName(user)}
+                                className="h-full w-full rounded-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-sm font-semibold text-amber-300">
+                                {getUserDisplayName(user).charAt(0).toUpperCase()}
+                              </span>
+                            )}
                           </div>
                           <div>
                             <p className="font-medium">{getUserDisplayName(user)}</p>
