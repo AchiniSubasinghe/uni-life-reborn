@@ -28,7 +28,7 @@ export const DEFAULT_CATEGORIES: Omit<Category, "id" | "businessCount">[] = [
   {
     name: "Restaurants",
     slug: "restaurant",
-    description: "Dining places and food outlets",
+    description: "Dining places and food outlets nearby and welcoming.",
     icon: "UtensilsCrossed",
     imageUrl: "/images/categories/restaurant.jpg",
     isActive: true,
